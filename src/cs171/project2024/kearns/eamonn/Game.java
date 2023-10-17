@@ -29,7 +29,7 @@ public class Game
 	
 	public static EnumMap<ResourceTile.Resource, String> resourceNames = new EnumMap<>(ResourceTile.Resource.class);
 	
-	private final double BASIC_EXTRACTION_RATE = 0.1;
+	private final double BASIC_EXTRACTION_RATE = 10;
 	
 	
 	private ResourceTile settlementTile;
