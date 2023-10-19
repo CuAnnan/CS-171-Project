@@ -89,6 +89,9 @@ public class Game
 		resourceNames.put(ResourceTile.Resource.FISSILE,	"Fissile Material");
 		resourceNames.put(ResourceTile.Resource.ORE,		"Ore");
 		
+		/*
+		 *	These may need tweaking 
+		 */
 		pollutionRates.put(ResourceTile.Resource.WOOD,		0.1);
 		pollutionRates.put(ResourceTile.Resource.WATER,		0.001);
 		pollutionRates.put(ResourceTile.Resource.OIL,		1.0);
