@@ -76,7 +76,7 @@ public class Game
 	 */
 	public Game(int radius)
 	{
-		BASIC_EXTRACTION_RATE = 0.1;
+		BASIC_EXTRACTION_RATE = 10;
 
 		this.radius = radius;
 
@@ -160,9 +160,7 @@ public class Game
 
 	public void loadResearch()
 	{
-		  JsonFactory jsonF = new JsonFactory();
-		  JsonParser jp = jsonF.createJsonParser(new File("./data/researches.json"));
-
+		  
 	}
 
 	public ResourceTile getSettlementTile()
