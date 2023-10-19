@@ -46,11 +46,11 @@ public class HexTile
 	/**
 	 * The tile's x position
 	 */
-	private int x;
+	protected int x;
 	/**
 	 * The tile's y position
 	 */
-	private int y;
+	protected int y;
 	
 	
 	

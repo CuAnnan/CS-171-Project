@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Random;
 
+import processing.data.JSONObject;
+
 /**
  * A class to extend HexTile to handle the inclusion of minerals and the simulated mining and pollution
  */
@@ -20,7 +22,8 @@ public class ResourceTile extends HexTile
 	/**
 	 * The array to represent the rate at which each resource is being extracted
 	 */
-	public static EnumMap<Resource, Double> extractionRates;
+	public EnumMap<Resource, Double> extractionRates;
+	public static EnumMap<Resource, Double> extractionResearchModifier;
 	/**
 	 * The remaining resource of each type in the tile
 	 */
@@ -79,6 +82,11 @@ public class ResourceTile extends HexTile
 	public double getResource(Resource r)
 	{
 		return this.resources.get(r);
+	}
+
+	public void setResourceExtractionRate(Resource r, double rate)
+	{
+		this.extractionRates.put(r, rate);
 	}
 	
 	/**
@@ -172,5 +180,23 @@ public class ResourceTile extends HexTile
 	public boolean isDepleted()
 	{
 		return this.depleted;
+	}
+
+	public JSONObject toJSON()
+	{
+		JSONObject out = new JSONObject();
+		out.put("x", this.x);
+		out.put("y", this.y);
+		JSONObject resources = new JSONObject();
+		for(Resource r:this.resources.keySet())
+		{
+			JSONObject resourceData = new JSONObject();
+			resourceData.put("startAmount", this.resources.get(r));
+			resourceData.put("remaining", this.remainingResources.get(r));
+			resources.put(r.toString(), resourceData);
+		}
+		out.put("resources", resources);
+		
+		return out;
 	}
 }

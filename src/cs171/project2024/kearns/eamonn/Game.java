@@ -29,7 +29,7 @@ public class Game
 	
 	public static EnumMap<ResourceTile.Resource, String> resourceNames = new EnumMap<>(ResourceTile.Resource.class);
 	
-	private final double BASIC_EXTRACTION_RATE = 10;
+	private final double BASIC_EXTRACTION_RATE = 0.1;
 	
 	
 	private ResourceTile settlementTile;
@@ -98,6 +98,10 @@ public class Game
 		{
 			t.explore();
 			this.discoveredTiles.add(t);
+			for(ResourceTile.Resource r:this.resourceDiscovered.keySet())
+			{
+				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
+			}
 		}
 	}
 	
@@ -225,7 +229,6 @@ public class Game
 	public void discoverResource(ResourceTile.Resource r)
 	{
 		resourceDiscovered.put(r, true);
-		ResourceTile.extractionRates.put(r, BASIC_EXTRACTION_RATE);
 	}
 	
 	public ArrayList<ArrayList<ResourceTile>> getTiles()
@@ -309,6 +312,10 @@ public class Game
 		{
 			t.explore();
 			this.discoveredTiles.add(t);
+			for(ResourceTile.Resource r:this.resourceDiscovered.keySet())
+			{
+				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
+			}
 		}
 	}
 }
