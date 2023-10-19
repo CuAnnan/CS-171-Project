@@ -109,17 +109,23 @@ public class ApplicationBootstrapper extends PApplet
 		rect(40 + MAP_BBOX_WIDTH, 10, width - MAP_BBOX_WIDTH - 50, MAP_BBOX_WIDTH);
 		fill(0);
 		textSize(20);
-		text("Resources: ", 40 + MAP_BBOX_WIDTH, 50);
+		int textY = 50;
+		
+		text("Resources:", 45 + MAP_BBOX_WIDTH, textY);
 		ResourceTile.Resource[] resources = {ResourceTile.Resource.WOOD, ResourceTile.Resource.LIVESTOCK, ResourceTile.Resource.WATER, ResourceTile.Resource.ORE, ResourceTile.Resource.OIL, ResourceTile.Resource.FISSILE};
-		int texty = 70;
 		for(ResourceTile.Resource r:resources)
 		{
 			if(game.isResourceDiscovered(r))
 			{
-				text(Game.resourceNames.get(r)+": "+String.format("%.1f", game.getResourceAvailable(r)), 60 + MAP_BBOX_WIDTH, texty);
-				texty+= 30;
+				textY += 30;
+				text(r.label+": "+String.format("%.1f", game.getResourceAvailable(r)), 60 + MAP_BBOX_WIDTH, textY);
 			}
 		}
+
+		textY+=30;
+		text("Research:", 45 + MAP_BBOX_WIDTH, textY);
+		textY+=30;
+		
 	}
 	
 	/**
@@ -131,6 +137,15 @@ public class ApplicationBootstrapper extends PApplet
 	{
 		game.processTick();
 		drawUI();
+	}
+
+	public void mouseClicked()
+	{
+		if(mouseX > MAP_BBOX_WIDTH && mouseY < MAP_BBOX_WIDTH)
+		{
+			System.out.println("The general map area was clicked " );
+		}
+		
 	}
 	
 	/**

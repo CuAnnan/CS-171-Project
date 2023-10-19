@@ -2,6 +2,8 @@ package cs171.project2024.kearns.eamonn;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 
@@ -42,10 +44,6 @@ public class Game
 	 * The amount of pollution that mining an individual resource generates
 	 */
 	private EnumMap<ResourceTile.Resource, Double> pollutionRates;
-	/**
-	 * A helper for the names of the resources, maps the Resource Enum to a friendly string
-	 */
-	public static EnumMap<ResourceTile.Resource, String> resourceNames = new EnumMap<>(ResourceTile.Resource.class);
 	
 	/**
 	 * This is just a helper for setting up the initial conditions
@@ -81,13 +79,6 @@ public class Game
 		this.resourcesMined = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesRemaining = new EnumMap<>(ResourceTile.Resource.class);
 		this.pollutionRates = new EnumMap<>(ResourceTile.Resource.class);
-		
-		resourceNames.put(ResourceTile.Resource.WOOD, 		"Wood");
-		resourceNames.put(ResourceTile.Resource.WATER, 		"Water");
-		resourceNames.put(ResourceTile.Resource.OIL, 		"Oil");
-		resourceNames.put(ResourceTile.Resource.LIVESTOCK,	"Livestock");
-		resourceNames.put(ResourceTile.Resource.FISSILE,	"Fissile Material");
-		resourceNames.put(ResourceTile.Resource.ORE,		"Ore");
 		
 		/*
 		 *	These may need tweaking 

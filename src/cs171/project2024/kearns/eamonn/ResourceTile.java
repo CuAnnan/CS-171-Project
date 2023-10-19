@@ -2,8 +2,11 @@ package cs171.project2024.kearns.eamonn;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
+import cs171.project2024.kearns.eamonn.Game.Research;
 import processing.data.JSONObject;
 
 /**
@@ -11,9 +14,37 @@ import processing.data.JSONObject;
  */
 public class ResourceTile extends HexTile
 {
+	/**
+	 * An enum to handle resources in a generic sense.
+	 * @see https://www.baeldung.com/java-enum-values
+	 */
 	public enum Resource
 	{
-		ORE, WOOD, WATER, OIL, LIVESTOCK, FISSILE;
+		ORE("Ore"),
+		WOOD("Wood"),
+		WATER("Water"),
+		OIL("Oil"),
+		LIVESTOCK("Livestock"),
+		FISSILE("Fissile Materials");
+		public final String label;
+		public static final Map<String, Resource> LABEL_MAP = new HashMap<>();
+
+		private Resource(String label)
+		{
+			this.label = label;
+		}
+
+		static {
+			for(Resource r: values())
+			{
+				LABEL_MAP.put(r.label, r);
+			}
+		}
+
+		public static Resource byLabel(String label)
+		{
+			return LABEL_MAP.get(label);
+		}
 	};
 	/**
 	 * The array to contain the mount of each resource available to a tile
