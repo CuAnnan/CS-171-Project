@@ -1,14 +1,23 @@
 package cs171.project2024.kearns.eamonn;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Stack;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+
+
 
 
 public class Game
 {
+	private ArrayList<Research> researches;
+
 	/**
 	 * A two dimensional array list to hold the ResourceTiles 
 	 */
@@ -70,8 +79,7 @@ public class Game
 		BASIC_EXTRACTION_RATE = 0.1;
 
 		this.radius = radius;
-		
-		
+
 		this.resourceTiles = new ArrayList<ArrayList<ResourceTile>>();
 		this.discoveredTiles = new ArrayList<ResourceTile>();
 		
@@ -140,6 +148,9 @@ public class Game
 				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
 			}
 		}
+
+		loadResearch();
+		
 	}
 
 	public Game()
@@ -147,7 +158,12 @@ public class Game
 		this(3);
 	}
 
-	
+	public void loadResearch()
+	{
+		  JsonFactory jsonF = new JsonFactory();
+		  JsonParser jp = jsonF.createJsonParser(new File("./data/researches.json"));
+
+	}
 
 	public ResourceTile getSettlementTile()
 	{
