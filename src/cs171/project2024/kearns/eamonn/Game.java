@@ -1,15 +1,8 @@
 package cs171.project2024.kearns.eamonn;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Stack;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 
 
 
@@ -17,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 public class Game
 {
 	private ArrayList<Research> researches;
+
 
 	/**
 	 * A two dimensional array list to hold the ResourceTiles 
@@ -160,8 +154,7 @@ public class Game
 
 	public void loadResearch()
 	{
-		  JsonFactory jsonF = new JsonFactory();
-		  JsonParser jp = jsonF.createJsonParser(new File("./data/researches.json"));
+		
 
 	}
 
