@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import cs171.project2024.kearns.eamonn.Game.Research;
 import processing.data.JSONObject;
 
 /**
