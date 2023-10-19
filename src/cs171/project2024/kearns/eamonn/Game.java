@@ -21,28 +21,56 @@ public class Game
 	 * The radius of the map hex grid in tiles.
 	 */
 	private int radius;
+	/**
+	 * The diameter of the map hex grid
+	 */
 	private int diameter;
 	
+	/**
+	 * Whether or not an individual resource type has been discovered
+	 */
 	private EnumMap<ResourceTile.Resource, Boolean> resourceDiscovered;
+	/**
+	 * The amount of each resource that has been mined overall
+	 */
 	private EnumMap<ResourceTile.Resource, Double> resourcesMined;
+	/**
+	 * The amount of resources available to the society
+	 */
 	private EnumMap<ResourceTile.Resource, Double> resourcesRemaining;
-	
+	/**
+	 * The amount of pollution that mining an individual resource generates
+	 */
+	private EnumMap<ResourceTile.Resource, Double> pollutionRates;
+	/**
+	 * A helper for the names of the resources, maps the Resource Enum to a friendly string
+	 */
 	public static EnumMap<ResourceTile.Resource, String> resourceNames = new EnumMap<>(ResourceTile.Resource.class);
 	
-	private final double BASIC_EXTRACTION_RATE = 0.1;
+	/**
+	 * This is just a helper for setting up the initial conditions
+	 */
+	private final double BASIC_EXTRACTION_RATE;
 	
-	
+	/**
+	 * The settlment tile gets handled discretely
+	 */
 	private ResourceTile settlementTile;
 	
+	/**
+	 * This is just used to help figure out how many tiles there are. Not sure if it's actually currently used.
+	 */
 	private int tileCount;
 	
-	
+
 	/**
 	 * 
 	 * @param radius The radius of the map in tiles 
 	 */
 	public Game(int radius)
 	{
+		BASIC_EXTRACTION_RATE = 0.1;
+
 		this.radius = radius;
 		
 		
@@ -52,6 +80,7 @@ public class Game
 		this.resourceDiscovered = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesMined = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesRemaining = new EnumMap<>(ResourceTile.Resource.class);
+		this.pollutionRates = new EnumMap<>(ResourceTile.Resource.class);
 		
 		resourceNames.put(ResourceTile.Resource.WOOD, 		"Wood");
 		resourceNames.put(ResourceTile.Resource.WATER, 		"Water");
@@ -60,6 +89,13 @@ public class Game
 		resourceNames.put(ResourceTile.Resource.FISSILE,	"Fissile Material");
 		resourceNames.put(ResourceTile.Resource.ORE,		"Ore");
 		
+		pollutionRates.put(ResourceTile.Resource.WOOD,		0.1);
+		pollutionRates.put(ResourceTile.Resource.WATER,		0.001);
+		pollutionRates.put(ResourceTile.Resource.OIL,		1.0);
+		pollutionRates.put(ResourceTile.Resource.LIVESTOCK,	0.75);
+		pollutionRates.put(ResourceTile.Resource.FISSILE,	1.0);
+		pollutionRates.put(ResourceTile.Resource.ORE,		1.0);
+
 		
 		for(ResourceTile.Resource r:ResourceTile.Resource.values())
 		{
@@ -91,9 +127,16 @@ public class Game
 		this.settlementTile = this.resourceTiles.get(radius-1).get(radius-1).occupy();
 		this.generateNeighbourConnections();
 		this.generateTileConnections();
-		this.discoverResource(ResourceTile.Resource.WOOD);
-		this.discoverResource(ResourceTile.Resource.WATER);
-		this.discoverResource(ResourceTile.Resource.LIVESTOCK);
+
+		// this.discoverResource(ResourceTile.Resource.WOOD);
+		// this.discoverResource(ResourceTile.Resource.WATER);
+		// this.discoverResource(ResourceTile.Resource.LIVESTOCK);
+		for(ResourceTile.Resource r: ResourceTile.Resource.values())
+		{
+			this.discoverResource(r);
+		}
+
+
 		for(ResourceTile t: this.settlementTile.getNeighbours())
 		{
 			t.explore();
@@ -104,12 +147,14 @@ public class Game
 			}
 		}
 	}
-	
+
 	public Game()
 	{
 		this(3);
 	}
+
 	
+
 	public ResourceTile getSettlementTile()
 	{
 		return this.settlementTile;
