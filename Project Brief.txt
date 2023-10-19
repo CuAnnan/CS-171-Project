@@ -1,0 +1,14 @@
+S171 Project proposal: environmentally themed application
+
+I’d like to build a game around the idea of resource extraction and how it is directly tied to environmental impact. My inspiration for this is 50% Catan[1] Tiles in the shape of Hexagons with roads on the edges. The game loop would be entirely different to Catan though.
+
+Each hexagon would have an opaque amount of various resources inferable by some graphical tell, prototyped as an arc of a given colour; red for ore, green for wood, grey for livestock, blue for water, etc. The angle of the arc will reduce from 100% to 0% as the resource is consumed or a triangle going from the edges to the centre that would empty towards the centre. A depth-first maze walking algorithm can be used to create a topology used to represent geography, the walls between cells representing geographic barriers to direct travel. There is room to expand the graphical output given time, but I am not currently prioritizing it. Functionality over form.
+
+Intended game play loop is largely idle, if not designed towards being incremental.[2] The game would act largely as a simulation, with players having little direct control over settlement growth, rather that they would research technologies that would improve output or provide an understanding of the underlying mechanics of the game.
+
+At its simplest, with room to expand on complexity as the project time allows; during arbitrary game tick, Hexes that have relevant resource extractors (farms, foresters, mines, oilwells, etc) will extract resources and start them moving towards the settlement. Similarly, each action that a cell takes will generate an amount of pollution. My intent is to have pollution initially opaque and that acquiring the ability to understand and mitigate it would be the main game cycle and either end in societal collapse or achieving energy balance in an environmentally sustainable manner.
+
+I've spent an hour trying to find out how to have a non static Class in Processing that can have static properties but have not been successful. I would, for this reason, like to write the application in Java, extending Processing's PApplet to leverage the simple graphical engine.
+
+[1] https://en.wikipedia.org/wiki/Catan
+[2] Idle vs incremental and what is and is not an incremental game is hotly debated in the community itself. But an idle game is a game that can largely just be left to run with a minimum of player interaction
