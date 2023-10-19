@@ -181,11 +181,11 @@ public class ApplicationBootstrapper extends PApplet
 		{
 			if(mouseY > RESEARCH_START)
 			{
-				ArrayList researches = game.getAvailableResearches();
+				ArrayList<Research> researches = game.getAvailableResearches();
 				int relevantMouseY = (mouseY - RESEARCH_START)/30;
 				if(relevantMouseY < researches.size())
 				{
-					System.out.println(researches.get(relevantMouseY));
+					game.buyResearch(researches.get(relevantMouseY));
 				}
 			}
 		}

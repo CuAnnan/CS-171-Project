@@ -217,6 +217,11 @@ public class Game
 		return researches;
 	}
 
+	public void buyResearch(Research r)
+	{
+		
+	}
+
 	public ResourceTile getSettlementTile()
 	{
 		return this.settlementTile;
