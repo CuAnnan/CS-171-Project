@@ -1,22 +1,24 @@
 package cs171.project2024.kearns.eamonn;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Stack;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
+import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
+
 
 
 
 
 public class Game
 {
-	private ArrayList<Research> researches;
+	private ArrayList<Research> researches = new ArrayList<Research>();
+
+	private final static String RESEARCH_FILE_PATH = "./data/research.csv";
 
 	/**
 	 * A two dimensional array list to hold the ResourceTiles 
@@ -57,7 +59,7 @@ public class Game
 	/**
 	 * This is just a helper for setting up the initial conditions
 	 */
-	private final double BASIC_EXTRACTION_RATE;
+	private final double BASIC_EXTRACTION_RATE = 0.025;
 	
 	/**
 	 * The settlment tile gets handled discretely
@@ -76,8 +78,6 @@ public class Game
 	 */
 	public Game(int radius)
 	{
-		BASIC_EXTRACTION_RATE = 10;
-
 		this.radius = radius;
 
 		this.resourceTiles = new ArrayList<ArrayList<ResourceTile>>();
@@ -130,13 +130,13 @@ public class Game
 		this.generateNeighbourConnections();
 		this.generateTileConnections();
 
-		// this.discoverResource(ResourceTile.Resource.WOOD);
-		// this.discoverResource(ResourceTile.Resource.WATER);
-		// this.discoverResource(ResourceTile.Resource.LIVESTOCK);
-		for(ResourceTile.Resource r: ResourceTile.Resource.values())
-		{
-			this.discoverResource(r);
-		}
+		this.discoverResource(ResourceTile.Resource.WOOD);
+		this.discoverResource(ResourceTile.Resource.WATER);
+		this.discoverResource(ResourceTile.Resource.LIVESTOCK);
+		// for(ResourceTile.Resource r: ResourceTile.Resource.values())
+		// {
+		// 	this.discoverResource(r);
+		// }
 
 
 		for(ResourceTile t: this.settlementTile.getNeighbours())
@@ -148,8 +148,18 @@ public class Game
 				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
 			}
 		}
-
-		loadResearch();
+		try
+		{
+			loadResearch();
+		}
+		catch(FileNotFoundException e)
+		{
+			System.out.println("The research data csv could not be found");
+		}
+		catch(IOException e)
+		{
+			System.err.println("There was a problem reading the research data.");
+		}
 		
 	}
 
@@ -158,9 +168,53 @@ public class Game
 		this(3);
 	}
 
-	public void loadResearch()
+	public void loadResearch() throws IOException
 	{
-		  
+		BufferedReader reader = new BufferedReader(new FileReader(RESEARCH_FILE_PATH));
+		String currentLine = reader.readLine();
+		// we don't actually do anything with this line
+		boolean firstLine = true;
+		ArrayList<String> researchTitles = new ArrayList<String>();
+		while(currentLine != null)
+		{
+			String[] lineParts = currentLine.split(",");
+			if(firstLine)
+			{
+				for(String part:lineParts)
+				{
+					researchTitles.add(part);
+				}
+			}
+			else
+			{
+				EnumMap<Resource, Double> resources = new EnumMap<>(Resource.class);
+				for(int i = 1; i < lineParts.length; i++)
+				{
+					if(lineParts[i] != "")
+					{
+						resources.put(Resource.byLabel(researchTitles.get(i)), Double.parseDouble(lineParts[i]));
+					}
+				}
+				Research r = new Research(lineParts[0], resources);
+				this.researches.add(r);
+			}
+			firstLine = false;
+			currentLine = reader.readLine();
+		}
+		reader.close();
+	}
+
+	public ArrayList<Research> getAvailableResearches()
+	{
+		ArrayList<Research> researches = new ArrayList<Research>();
+		for(Research r:this.researches)
+		{
+			if(r.canAfford(this.resourcesMined))
+			{
+				researches.add(r);
+			}
+		}
+		return researches;
 	}
 
 	public ResourceTile getSettlementTile()

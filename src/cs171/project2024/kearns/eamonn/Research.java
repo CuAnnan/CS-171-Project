@@ -1,7 +1,6 @@
 package cs171.project2024.kearns.eamonn;
 
 import java.util.EnumMap;
-import java.util.Set;
 
 import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
 
@@ -25,12 +24,24 @@ public class Research
     public boolean canAfford(EnumMap<Resource, Double> availableResources)
     {
         boolean canAfford = true;
-        int i = 0;
-        Set<Resource> resources = costs.keySet();
-        while(i < resources.size() && canAfford)
+        for(Resource r: this.costs.keySet())
         {
-            canAfford = false;
+            if(availableResources.get(r) < this.costs.get(r))
+            {
+                canAfford = false;
+            }
         }
         return canAfford;
+    }
+
+    public String toString()
+    {
+        String out = String.format("[%s:\n", this.name);
+        for(Resource r : this.costs.keySet())
+        {
+            out+= String.format("\t%s: %.2f\n", r.label, this.costs.get(r));
+        }
+        out += "]";
+        return out;
     }
 }

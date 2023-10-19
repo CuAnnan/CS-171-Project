@@ -122,10 +122,13 @@ public class ApplicationBootstrapper extends PApplet
 			}
 		}
 
-		textY+=30;
+		textY=260;
 		text("Research:", 45 + MAP_BBOX_WIDTH, textY);
-		textY+=30;
-		
+		for(Research r: game.getAvailableResearches())
+		{
+			textY += 30;
+			text(r.getName(), 60 + MAP_BBOX_WIDTH, textY);
+		}
 	}
 	
 	/**
@@ -141,11 +144,19 @@ public class ApplicationBootstrapper extends PApplet
 
 	public void mouseClicked()
 	{
-		if(mouseX > MAP_BBOX_WIDTH && mouseY < MAP_BBOX_WIDTH)
+		if(mouseX < MAP_BBOX_WIDTH && mouseY < MAP_BBOX_WIDTH)
 		{
-			System.out.println("The general map area was clicked " );
+			ArrayList<ArrayList<ResourceTile>> rows = game.getTiles();
+			for(ArrayList<ResourceTile> row:rows)
+			{
+				ResourceTile firstCell = row.get(0);
+				// I need to figure out if a click event is occuring within the area defined by a til
+			}
 		}
-		
+		else
+		{
+			System.out.println("Research menu probably clicked");
+		}
 	}
 	
 	/**
