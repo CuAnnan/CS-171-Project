@@ -9,11 +9,18 @@ public class Research
 {
     protected final String name;
     protected final EnumMap<Resource, Double> costs;
+    protected boolean complete;
 
     public Research(String name, EnumMap<Resource, Double> costs)
     {
+        this(name, costs, false);
+    }
+    
+    public Research(String name, EnumMap<Resource, Double> costs, boolean complete)
+    {
         this.name = name;
         this.costs = costs;
+        this.complete = complete;
     }
 
     public String getName()
@@ -32,6 +39,11 @@ public class Research
             }
         }
         return canAfford;
+    }
+
+    public boolean isResearched()
+    {
+        return this.complete;
     }
 
     public String toString()

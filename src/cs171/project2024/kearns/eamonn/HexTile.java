@@ -1,6 +1,7 @@
 package cs171.project2024.kearns.eamonn;
 import java.util.EnumMap;
 import java.util.Random;
+import java.awt.Polygon;
 
 /**
  * A class to handle the relative positions of tiles to each other and allow tile walking for the creation of maze like structures.
@@ -51,9 +52,12 @@ public class HexTile
 	 * The tile's y position
 	 */
 	protected int y;
+
+	Polygon polygon;
 	
-	
-	
+	int[][] points = null;
+	int[] topMostPoint = new int[2];
+	int[] bottomMostPoint = new int[2];
 	
 	
 	
@@ -96,6 +100,39 @@ public class HexTile
 		this.neighbours.put(direction, neighbour);
 		Direction d = this.opposites.get(direction);
 		neighbour.neighbours.put(d, this);
+	}
+
+	public void setPoints(int points[][])
+	{
+		int smallest = Integer.MAX_VALUE;
+		int biggest = Integer.MIN_VALUE;
+		this.polygon = new Polygon();
+
+		for(int[] point: points)
+		{
+			this.polygon.addPoint(point[0], point[1]);
+			if(point[1] > biggest)
+			{
+				biggest = point[1];
+				this.bottomMostPoint = point;
+			}
+			if(point[1] < smallest)
+			{
+				smallest = point[1];
+				this.topMostPoint = point;
+			}
+		}
+		this.points = points;
+	}
+
+	public boolean isPointInside(int x, int y)
+	{
+		return this.polygon.contains(x, y);
+	}
+
+	public boolean isWithinVerticalBounds(int y)
+	{
+		return y < this.bottomMostPoint[1] && y > this.topMostPoint[1];
 	}
 	
 	public boolean hasNeighbour(Direction direction)

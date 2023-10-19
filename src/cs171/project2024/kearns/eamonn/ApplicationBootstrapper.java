@@ -10,6 +10,10 @@ import processing.core.PApplet;
 public class ApplicationBootstrapper extends PApplet
 {
 	static float MAP_BBOX_WIDTH;
+
+	static final int RESEARCH_START = 260;
+	static final int TEXT_PADDING = 30;
+
 	static Game game;
 	int timesDrawn = 0;
 	
@@ -92,7 +96,12 @@ public class ApplicationBootstrapper extends PApplet
 	public void setup()
 	{
 		surface.setTitle("CS 171 Project (Eamonn Kearns)");
-		drawUI();
+		drawUI(true);
+	}
+
+	public void drawUI()
+	{
+		drawUI(false);
 	}
 	
 	/**
@@ -100,10 +109,10 @@ public class ApplicationBootstrapper extends PApplet
 	 * Draws a rectangle for the resources and writes out the current values. This is very much a work in progress.
 	 * @see ApplicationBootstrapper#drawMap()
 	 */
-	public void drawUI()
+	public void drawUI(boolean firstTime)
 	{
 		// draw the map
-		drawMap();
+		drawMap(firstTime);
 		// draw the rest
 		fill(255);
 		rect(40 + MAP_BBOX_WIDTH, 10, width - MAP_BBOX_WIDTH - 50, MAP_BBOX_WIDTH);
@@ -117,16 +126,17 @@ public class ApplicationBootstrapper extends PApplet
 		{
 			if(game.isResourceDiscovered(r))
 			{
-				textY += 30;
+				textY += TEXT_PADDING;
 				text(r.label+": "+String.format("%.1f", game.getResourceAvailable(r)), 60 + MAP_BBOX_WIDTH, textY);
 			}
 		}
 
-		textY=260;
+		textY=RESEARCH_START;
 		text("Research:", 45 + MAP_BBOX_WIDTH, textY);
 		for(Research r: game.getAvailableResearches())
 		{
-			textY += 30;
+			textY += TEXT_PADDING;
+			
 			text(r.getName(), 60 + MAP_BBOX_WIDTH, textY);
 		}
 	}
@@ -150,12 +160,34 @@ public class ApplicationBootstrapper extends PApplet
 			for(ArrayList<ResourceTile> row:rows)
 			{
 				ResourceTile firstCell = row.get(0);
-				// I need to figure out if a click event is occuring within the area defined by a til
+				// I need to figure out if a click event is occuring within the area defined by a tile
+				if(firstCell.isWithinVerticalBounds(mouseY))
+				{
+					boolean found = false;
+					int i = 0;
+					while(!found && i < row.size())
+					{
+						ResourceTile r = row.get(i);
+						if(r.isPointInside(mouseX, mouseY))
+						{
+							found = true;
+						}
+						i++;
+					}
+				}
 			}
 		}
 		else
 		{
-			System.out.println("Research menu probably clicked");
+			if(mouseY > RESEARCH_START)
+			{
+				ArrayList researches = game.getAvailableResearches();
+				int relevantMouseY = (mouseY - RESEARCH_START)/30;
+				if(relevantMouseY < researches.size())
+				{
+					System.out.println(researches.get(relevantMouseY));
+				}
+			}
 		}
 	}
 	
@@ -167,7 +199,7 @@ public class ApplicationBootstrapper extends PApplet
 	 * @param radius		The radius at which to draw the ResourceTile
 	 * @see	ResourceTile	See the ResourceTile class file for its implementation	
 	 */
-	public void drawResourceTile(ResourceTile tile, float x, float y, float radius)
+	public int[][] drawResourceTile(ResourceTile tile, float x, float y, float radius)
 	{
 		strokeWeight(1);
 		/*
@@ -189,65 +221,21 @@ public class ApplicationBootstrapper extends PApplet
 		}
 		else
 		{
-			// draw the map tile
-			noStroke();
-			if(tile.isExplored())
-			{
-				// we only draw the resources if the tile is explored
-				fill(100,200,100);
-				float[][] points = hexagon(x, y, radius);
-				int i = 0;
-				for(ResourceTile.Resource r: ResourceTile.Resource.values())
-				{
-					// only draw the resources if they are discovered and the tile has them
-					// TODO: Add a step to ignore this if the tile's resource is exhausted, wasted clock cycles.
-					if(game.isResourceDiscovered(r) && tile.hasResource(r))
-					{
-						stroke(0); // we don't stroke
-						switch(r)
-						{
-							// figure out the color
-							case FISSILE:
-								fill(255,255,0);
-								break;
-							case OIL:
-								fill(139,69,19);
-								break;
-							case ORE:
-								fill(150,25,25);
-								break;
-							case WATER:
-								fill(0, 150, 255);
-								break;
-							case WOOD:
-								fill(0,200,0);
-								break;
-							case LIVESTOCK:
-								fill(200);
-								break;
-						}
-						// Figure out the centre of the point of the resource indicator by doing some maths
-						// I may revisit this position later as I add roads.
-						float centreX = (x + points[i][0] + points[(i+1)%6][0]) / 3;
-						float centreY = (y + points[i][1] + points[(i+1)%6][1]) / 3;
-						// Draw a decreasing arc around it using the PIE flag. I've tried both with and without, the PIE looks slightly better
-						// but this is an aesthetic choice.
-						arc(centreX, centreY, radius/2, radius/2, 0, TWO_PI * (float)tile.getAvailableResource(r), PIE);
-					}
-					i++;
-				}
-				noFill();
-				stroke(100,180,100);
-				strokeWeight(2);
-			}
-			else
-			{
-				// if the cell hasn't been discovered, apply fog of war instead
-				fill(100,180,100);
-			}
+			drawResources(tile, x, y, radius);
 			externalPoints = hexagon(x, y, radius);
 		}
 		
+		drawTileWalls(tile, externalPoints);
+		int[][] pointsAsInts = new int[externalPoints.length][2];
+		for(int i = 0; i < externalPoints.length; i++)
+		{
+			pointsAsInts[i][0] = (int)externalPoints[i][0];
+			pointsAsInts[i][1] = (int)externalPoints[i][1];
+		}
+		return pointsAsInts;
+	}
+
+	private void drawTileWalls(ResourceTile tile, float[][] externalPoints) {
 		stroke(0);
 		for(HexTile.Direction d: HexTile.Direction.values())
 		{
@@ -289,12 +277,76 @@ public class ApplicationBootstrapper extends PApplet
 			}
 		}
 	}
+
+	private void drawResources(ResourceTile tile, float x, float y, float radius) {
+		// draw the map tile
+		noStroke();
+		if(tile.isExplored())
+		{
+			// we only draw the resources if the tile is explored
+			fill(100,200,100);
+			float[][] points = hexagon(x, y, radius);
+			int i = 0;
+			for(ResourceTile.Resource r: ResourceTile.Resource.values())
+			{
+				// only draw the resources if they are discovered and the tile has them
+				// TODO: Add a step to ignore this if the tile's resource is exhausted, wasted clock cycles.
+				if(game.isResourceDiscovered(r) && tile.hasResource(r))
+				{
+					stroke(0); // we don't stroke
+					switch(r)
+					{
+						// figure out the color
+						case FISSILE:
+							fill(255,255,0);
+							break;
+						case OIL:
+							fill(139,69,19);
+							break;
+						case ORE:
+							fill(150,25,25);
+							break;
+						case WATER:
+							fill(0, 150, 255);
+							break;
+						case WOOD:
+							fill(0,200,0);
+							break;
+						case LIVESTOCK:
+							fill(200);
+							break;
+					}
+					// Figure out the centre of the point of the resource indicator by doing some maths
+					// I may revisit this position later as I add roads.
+					float centreX = (x + points[i][0] + points[(i+1)%6][0]) / 3;
+					float centreY = (y + points[i][1] + points[(i+1)%6][1]) / 3;
+					// Draw a decreasing arc around it using the PIE flag. I've tried both with and without, the PIE looks slightly better
+					// but this is an aesthetic choice.
+					arc(centreX, centreY, radius/2, radius/2, 0, TWO_PI * (float)tile.getAvailableResource(r), PIE);
+				}
+				i++;
+			}
+			noFill();
+			stroke(100,180,100);
+			strokeWeight(2);
+		}
+		else
+		{
+			// if the cell hasn't been discovered, apply fog of war instead
+			fill(100,180,100);
+		}
+	}
+
+	private void drawMap()
+	{
+		drawMap(false);
+	}
 	
 	/**
 	 * A method to draw the map to the screen. The position of the centre point of the drawing area is determined by a hypothetical bounding box derived from the 
 	 * width and height of the draw screen.
 	 */
-	private void drawMap() {
+	private void drawMap(boolean firstTime) {
 		// this is to determine how much of the UI in general the map will use
 		float scale = 1f;
 		
@@ -327,7 +379,11 @@ public class ApplicationBootstrapper extends PApplet
 			float columnX = offset + MAP_BBOX_WIDTH / 2  - tileWidth / 2 * (row.size() - 1);
 			for(ResourceTile tile: row)
 			{
-				drawResourceTile(tile, columnX, rowY, tileRadius);
+				int[][] points = drawResourceTile(tile, columnX, rowY, tileRadius);
+				if(firstTime)
+				{
+					tile.setPoints(points);
+				}
 				columnX += tileWidth;
 			}
 			
@@ -337,7 +393,7 @@ public class ApplicationBootstrapper extends PApplet
 	
 	public static void main(String[] args)
 	{
-		game = new Game(10);
+		game = new Game(5);
 		String[] processingArgs = {"My Game"};
 		ApplicationBootstrapper myGame = new ApplicationBootstrapper();
 		PApplet.runSketch(processingArgs, myGame);

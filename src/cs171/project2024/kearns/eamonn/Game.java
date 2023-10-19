@@ -209,7 +209,7 @@ public class Game
 		ArrayList<Research> researches = new ArrayList<Research>();
 		for(Research r:this.researches)
 		{
-			if(r.canAfford(this.resourcesMined))
+			if(!r.isResearched() && r.canAfford(this.resourcesMined))
 			{
 				researches.add(r);
 			}
