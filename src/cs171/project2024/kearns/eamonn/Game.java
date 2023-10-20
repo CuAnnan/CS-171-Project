@@ -504,7 +504,7 @@ public class Game
 	 * This method processes the passage of arbitrary time. What a tick is is largely irrelevant. During a tick, resources get mined and added to the total.
 	 * Implementing the movement of resources, rather than the instantaneous acquisition of them, is relatively high priority but needs to come after research.
 	 */
-	void processTick()
+	public void processTick()
 	{
 		ArrayList<ResourceTile> newlyDiscoveredNeighbouringTiles = new ArrayList<ResourceTile>();
 		for(ResourceTile t: this.discoveredTiles)
