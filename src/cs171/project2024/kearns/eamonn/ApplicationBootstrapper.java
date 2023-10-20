@@ -139,6 +139,12 @@ public class ApplicationBootstrapper extends PApplet
 			
 			text(r.getName(), 60 + MAP_BBOX_WIDTH, textY);
 		}
+		timesDrawn++;
+		timesDrawn %= 50;
+		if(timesDrawn == 0)
+		{
+			game.updateAvailableResearches();
+		}
 	}
 	
 	/**
@@ -179,10 +185,11 @@ public class ApplicationBootstrapper extends PApplet
 		}
 		else
 		{
+			// this is hasty and may need revisiting given time.
 			if(mouseY > RESEARCH_START)
 			{
 				ArrayList<Research> researches = game.getAvailableResearches();
-				int relevantMouseY = (mouseY - RESEARCH_START)/30;
+				int relevantMouseY = (mouseY - RESEARCH_START -5)/30;
 				if(relevantMouseY < researches.size())
 				{
 					game.buyResearch(researches.get(relevantMouseY));
@@ -388,7 +395,7 @@ public class ApplicationBootstrapper extends PApplet
 	
 	public static void main(String[] args)
 	{
-		game = new Game(5);
+		game = new Game();
 		String[] processingArgs = {"My Game"};
 		ApplicationBootstrapper myGame = new ApplicationBootstrapper();
 		PApplet.runSketch(processingArgs, myGame);

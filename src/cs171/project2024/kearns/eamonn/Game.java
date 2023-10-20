@@ -10,15 +10,25 @@ import java.util.Stack;
 
 import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
 
-
-
-
-
+/**
+ * A class to encapsulate the bulk of the game's business logic
+ */
 public class Game
 {
+	/**
+	 * All of the researches that can be learned, whether exposed to the player or not. Read in from a CSV.
+	 * @see Game#RESEARCH_FILE_PATH
+	 */
 	private ArrayList<Research> researches = new ArrayList<Research>();
-
+	/**
+	 * The csv file determining the names and costs of the researches.
+	 */
 	private final static String RESEARCH_FILE_PATH = "./data/research.csv";
+	/**
+	 * The available researches. This is populated by a somewhat expensive loop and so it is advisable to throttle its upkeep or develop a better algorithm.
+	 * @see Game#updateAvailableResearches()
+	 */
+	private ArrayList<Research> availableResearches;
 
 	/**
 	 * A two dimensional array list to hold the ResourceTiles 
@@ -59,7 +69,7 @@ public class Game
 	/**
 	 * This is just a helper for setting up the initial conditions
 	 */
-	private final double BASIC_EXTRACTION_RATE = 0.025;
+	private final double BASIC_EXTRACTION_RATE = 0.25;
 	
 	/**
 	 * The settlment tile gets handled discretely
@@ -70,10 +80,11 @@ public class Game
 	 * This is just used to help figure out how many tiles there are. Not sure if it's actually currently used.
 	 */
 	private int tileCount;
-	
 
+
+	
 	/**
-	 * 
+	 * The game's real constructor. Populates the properties, reads in the researches, sets the intial values, builds the data structure to represent the map and runs the depth-first maze algorithm to determine the geography/topology.
 	 * @param radius The radius of the map in tiles 
 	 */
 	public Game(int radius)
@@ -87,6 +98,8 @@ public class Game
 		this.resourcesMined = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesRemaining = new EnumMap<>(ResourceTile.Resource.class);
 		this.pollutionRates = new EnumMap<>(ResourceTile.Resource.class);
+
+		this.availableResearches = new ArrayList<Research>();
 		
 		/*
 		 *	These may need tweaking 
@@ -126,10 +139,14 @@ public class Game
 			this.resourceTiles.add(row);
 		}
 		
+		// occupy the centre tile
 		this.settlementTile = this.resourceTiles.get(radius-1).get(radius-1).occupy();
+		// Set every tile to be beside the tiles they should be beside
 		this.generateNeighbourConnections();
+		// build the connections
 		this.generateTileConnections();
-
+		
+		// mark wood, water and livestock as discovered
 		this.discoverResource(ResourceTile.Resource.WOOD);
 		this.discoverResource(ResourceTile.Resource.WATER);
 		this.discoverResource(ResourceTile.Resource.LIVESTOCK);
@@ -138,7 +155,8 @@ public class Game
 		// 	this.discoverResource(r);
 		// }
 
-
+		
+		// reveal the initial neighbours of the settlement tile
 		for(ResourceTile t: this.settlementTile.getNeighbours())
 		{
 			t.explore();
@@ -148,6 +166,8 @@ public class Game
 				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
 			}
 		}
+
+		// load the research and "handle" the exceptions
 		try
 		{
 			loadResearch();
@@ -162,12 +182,22 @@ public class Game
 		}
 		
 	}
-
+	
+	/**
+	 * Secondary constructor to default the game radius to a fixed predetermined size.
+	 */
 	public Game()
 	{
-		this(3);
+		this(10);
 	}
 
+	/**
+	 * Loads the research from the file at RESEARCH_FILE_PATH and throws the exception back to the invoker.
+	 * The initial intent was to use JSON, which is better structured than CSV, but understanding the libraries was taking longer than I was willing to devote to something this early in the development cycle.
+	 * CSV will do for now
+	 * @see Game#RESEARCH_FILE_PATH
+	 * @throws IOException
+	 */
 	public void loadResearch() throws IOException
 	{
 		BufferedReader reader = new BufferedReader(new FileReader(RESEARCH_FILE_PATH));
@@ -204,7 +234,22 @@ public class Game
 		reader.close();
 	}
 
+	/**
+	 * Return the researches that are available to be performed
+	 * @return	An ArrayList of Research objects
+	 * @see		Research
+	 */
 	public ArrayList<Research> getAvailableResearches()
+	{
+		return this.availableResearches;
+	}
+
+	/**
+	 * Iterates through all of the researches and, if they can be afforded, adds them to the available researches property.
+	 * This has been separated from getAvailableResearches because, for one reason or another, clicks were not registering on it. It may have been a race condition between the draw and the update of the variable.
+	 * @see Research#canAfford()
+	 */
+	public void updateAvailableResearches()
 	{
 		ArrayList<Research> researches = new ArrayList<Research>();
 		for(Research r:this.researches)
@@ -214,12 +259,16 @@ public class Game
 				researches.add(r);
 			}
 		}
-		return researches;
+		this.availableResearches = researches;
 	}
 
+	/**
+	 * This is where I will implement the functionality to buy research
+	 * @param r
+	 */
 	public void buyResearch(Research r)
 	{
-		
+		System.out.println(r);
 	}
 
 	public ResourceTile getSettlementTile()
@@ -227,17 +276,44 @@ public class Game
 		return this.settlementTile;
 	}
 	
+	/**
+	 * Iterate through the tiles and provide each tile its neighbours. 
+	 * This is to facilitate an easier maze walking algorithm without tightly coupling the Game and Tile classes.
+	 * The loop logic for this is a bit confounding because whether a downards neighbour in a two dimensional array is left or right of the cell above it depends on what row you are in.
+	 * this is a fallout of representing hexes in the form
+	 * ####
+	 * #####
+	 * ######
+	 * #####
+	 * ####
+	 * 
+	 * to mean
+	 * 
+	 *   # # #
+	 *  # # # #
+	 * # # # # #
+	 *  # # # #
+	 *   # # #
+	 * @see Game#generateTileConnections()
+	 * @see HexTile#addNeighbour()
+	 */
 	public void generateNeighbourConnections()
 	{
+		/*
+		 * 
+		 * 
+		 */
 		for(ArrayList<ResourceTile> row : this.resourceTiles)
 		{
 			for(ResourceTile tile: row)
 			{
+				// we always want to add left right relationships. They're nice and simple.
 				if(tile.getX() + 1 < row.size())
 				{
 					tile.addNeighbour(row.get(tile.getX()+1), ResourceTile.Direction.WEST);
 				}
 				
+				// if we're on a row that is above the centre row, we consider cells in the row below us to be left shifted
 				if(tile.getY() < this.resourceTiles.size()/2)
 				{
 					ArrayList<ResourceTile> below = this.resourceTiles.get(tile.getY()+1);
@@ -255,6 +331,7 @@ public class Game
 						}
 					}
 				}
+				// the centre row gets its own considerations as it has to be concerned with the rules for above and below differently. The row above is right shifted as is the row below. It is a unique case.
 				else if(tile.getY() == this.resourceTiles.size()/2)
 				{
 					ArrayList<ResourceTile> below = this.resourceTiles.get(tile.getY()+1);
@@ -269,6 +346,7 @@ public class Game
 						tile.addNeighbour(above.get(tile.getX()-1), ResourceTile.Direction.NORTHWEST);
 					}
 				}
+				// the rows below the centre row are right shifted
 				else
 				{
 					if(tile.getY() < this.resourceTiles.size() - 1)
@@ -323,26 +401,47 @@ public class Game
 		}
 	}
 	
+	/**
+	 * Getter for the radius of the game in tiles
+	 * @return	The radius of the game in tiles.
+	 */
 	public int getRadius()
 	{
 		return radius;
 	}
 	
+	/**
+	 * Getter for the diameter of the game in tiles
+	 * @return	The radius of the game in tiles
+	 */
 	public int getDiameter()
 	{
 		return diameter;
 	}
 	
+	/**
+	 * A method to determine if a given resource has been discovered
+	 * @param r	The reseource to check
+	 * @return	Whether or not the resource has been discovered
+	 */
 	public boolean isResourceDiscovered(ResourceTile.Resource r)
 	{
 		return resourceDiscovered.get(r);
 	}
 	
+	/**
+	 * A method to mark a resource as discobvered
+	 * @param r	The resource to discover
+	 */
 	public void discoverResource(ResourceTile.Resource r)
 	{
 		resourceDiscovered.put(r, true);
 	}
 	
+	/**
+	 * A method to get the 2d array list of tiles
+	 * @return
+	 */
 	public ArrayList<ArrayList<ResourceTile>> getTiles()
 	{
 		return this.resourceTiles;
@@ -382,16 +481,30 @@ public class Game
 		return String.join("\n", output);
 	}
 	
+	/**
+	 * This was useful in early development. I am uncertain if it has any long term benefit but will be leaving it in for the time being.
+	 * @return	The count of tiles in the game
+	 */
 	public int getTileCount()
 	{
 		return this.tileCount;
 	}
 	
-	public double getResourceAvailable(ResourceTile.Resource r)
+	/**
+	 * Determine the amount of a given resource available for use
+	 * @param resiource	The resource to get available amounts of
+	 * @return			The amount of the given resource
+	 */
+	public double getResourceAvailable(ResourceTile.Resource resource)
 	{
-		return this.resourcesRemaining.get(r);
+		return this.resourcesRemaining.get(resource);
 	}
 	
+	/**
+	 * This method processes the passage of arbitrary time. What a tick is is largely irrelevant. During a tick, resources get mined and added to the total.
+	 * Implementing the movement of resources, rather than the instantaneous acquisition of them, is relatively high priority but needs to come after research.
+	 * 
+	 */
 	void processTick()
 	{
 		ArrayList<ResourceTile> newlyDiscoveredNeighbouringTiles = new ArrayList<ResourceTile>();
