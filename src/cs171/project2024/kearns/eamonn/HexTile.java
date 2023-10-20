@@ -55,7 +55,6 @@ public class HexTile
 
 	Polygon polygon;
 	
-	int[][] points = null;
 	int[] topMostPoint = new int[2];
 	int[] bottomMostPoint = new int[2];
 	
@@ -122,7 +121,6 @@ public class HexTile
 				this.topMostPoint = point;
 			}
 		}
-		this.points = points;
 	}
 
 	public boolean isPointInside(int x, int y)
