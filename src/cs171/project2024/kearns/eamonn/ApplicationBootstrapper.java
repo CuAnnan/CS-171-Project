@@ -336,11 +336,6 @@ public class ApplicationBootstrapper extends PApplet
 			fill(100,180,100);
 		}
 	}
-
-	private void drawMap()
-	{
-		drawMap(false);
-	}
 	
 	/**
 	 * A method to draw the map to the screen. The position of the centre point of the drawing area is determined by a hypothetical bounding box derived from the 
