@@ -186,6 +186,10 @@ public class ResourceTile extends HexTile
 		return amountTaken;
 	}
 
+	/**
+	 * Get the array of all unexplored neighbours.
+	 * @return	The list of unexplored neighbours
+	 */
 	public ArrayList<ResourceTile> getUnexploredNeighbours()
 	{
 		ArrayList<ResourceTile> neighbours = new ArrayList<ResourceTile>();
@@ -202,31 +206,20 @@ public class ResourceTile extends HexTile
 		return neighbours;
 	}
 
+	/**
+	 * This is a method to mark a cell as being depleted.
+	 */
 	public void markDepleted()
 	{
 		this.depleted = true;
 	}
 
+	/**
+	 * A method to check if a cell is depleted.
+	 * @return	Returns true if the cell is depleted, false if it has remaining resources. Only 
+	 */
 	public boolean isDepleted()
 	{
 		return this.depleted;
-	}
-
-	public JSONObject toJSON()
-	{
-		JSONObject out = new JSONObject();
-		out.put("x", this.x);
-		out.put("y", this.y);
-		JSONObject resources = new JSONObject();
-		for(Resource r:this.resources.keySet())
-		{
-			JSONObject resourceData = new JSONObject();
-			resourceData.put("startAmount", this.resources.get(r));
-			resourceData.put("remaining", this.remainingResources.get(r));
-			resources.put(r.toString(), resourceData);
-		}
-		out.put("resources", resources);
-		
-		return out;
 	}
 }
