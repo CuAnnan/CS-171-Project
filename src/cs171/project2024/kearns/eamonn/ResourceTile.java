@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import processing.data.JSONObject;
 
 /**
  * A class to extend HexTile to handle the inclusion of minerals and the simulated mining and pollution
