@@ -227,7 +227,9 @@ public class HexTile
 	 */
 	public Direction getRandomUnvisitedNeighbourDirection()
 	{
+		// initialise to null
 		Direction neighbourDirection = null;
+		// set an array
 		Direction[] neighbourDirections = new Direction[neighbours.size()];
 		
 		// shuffle the directions
@@ -239,7 +241,7 @@ public class HexTile
 		}
 			
 		Random r = new Random();
-		// shuffle the array of 
+		// shuffle the array of neighbours using a random swap sort, fast but not cryptographically solid, but that's fine.
 		for(i = 0; i < neighbourDirections.length; i++)
 		{
 			int randomIndex = r.nextInt(neighbourDirections.length);
@@ -249,6 +251,7 @@ public class HexTile
 		}
 		
 		i = 0;
+		// get a the first of the unvisited neighbouring cells (or null if none)
 		while(neighbourDirection == null && i < neighbourDirections.length)
 		{
 			HexTile t = this.neighbours.get(neighbourDirections[i]);
@@ -261,30 +264,49 @@ public class HexTile
 		return neighbourDirection;
 	}
 	
-	public HexTile getNeighbour(Direction d)
+	/**
+	 * Get a specific neighbour given the direction, or null if nonoe
+	 * @param 	direction	The direction to find the neighbour at, if such a neighbour exists
+	 * @return				The neighbouring Tile or null if none
+	 */
+	public HexTile getNeighbour(Direction direction)
 	{
-		if(this.neighbours.containsKey(d))
+		if(this.neighbours.containsKey(direction))
 		{
-			return this.neighbours.get(d);
+			return this.neighbours.get(direction);
 		}
 		return null;
 	}
 	
-	public boolean isConnected(Direction d)
+	/**
+	 * Check whether or not a tile is connected to its neighbour. Connectedness is what determines whether there is a wall between two cells.
+	 * If they are connected there is no wall
+	 * @param	direction	The direction to check for connectedness
+	 * @return				Returns true if the cells are connected by the given direction, false otherwise.
+	 */
+	public boolean isConnected(Direction direction)
 	{
-		if(this.connections.containsKey(d))
+		if(this.connections.containsKey(direction))
 		{
-			return this.connections.get(d);
+			return this.connections.get(direction);
 		}
 		return false;
 	}
 	
-	public void addConnection(Direction d)
+	/**
+	 * Add a connection between two tiles by the direction. This is reflective so the opposite connection is also added.
+	 * eg  a cell connected to its northwest neighbour, the neighbour's connected to this cell at the southeast
+	 * @param direction	The direction to establish a connection between
+	 */
+	public void addConnection(Direction direction)
 	{
-		this.connections.put(d, true);
-		this.neighbours.get(d).connections.put(this.opposites.get(d), true);
+		this.connections.put(direction, true);
+		this.neighbours.get(direction).connections.put(this.opposites.get(direction), true);
 	}
 	
+	/**
+	 * This is just a primitive helper file to allow the printing of Tiles and, by extension, the entire map.
+	 */
 	public String toString()
 	{
 		return this.occupied?"+":this.visited?"#":"*";
