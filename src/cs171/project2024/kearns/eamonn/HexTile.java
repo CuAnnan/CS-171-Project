@@ -53,9 +53,20 @@ public class HexTile
 	 */
 	protected int y;
 
+	/**
+	 * This is the easiest way to check if a point is inside a hextile, figuring out the calculations myself is possible, but would be reinventing the wheel.
+	 */
 	Polygon polygon;
 	
+	/**
+	 * The topMostPoint lets you tell if a row could conceivably contain the hextile that contains a Hextile that has been clicked. When iterating through the rows of tiles, this allows us to check the top and bottom bounds of the row by checking
+	 * the y coordinate against said bounds.
+	 */
 	int[] topMostPoint = new int[2];
+	/**
+	 * The topMostPoint lets you tell if a row could conceivably contain the hextile that contains a Hextile that has been clicked. When iterating through the rows of tiles, this allows us to check the top and bottom bounds of the row by checking
+	 * the y coordinate against said bounds.
+	 */
 	int[] bottomMostPoint = new int[2];
 	
 	
@@ -94,6 +105,11 @@ public class HexTile
 		return this;
 	}
 	
+	/**
+	 * Add a neighbour to a cell and store its direction relative to this tile. This is done for thee neighbouring cell in the opposite direction
+	 * @param neighbour	The neighbouring cell
+	 * @param direction	The direction of the relationship
+	 */
 	public void addNeighbour(HexTile neighbour, Direction direction)
 	{
 		this.neighbours.put(direction, neighbour);
@@ -101,6 +117,10 @@ public class HexTile
 		neighbour.neighbours.put(d, this);
 	}
 
+	/**
+	 * Set the points the hextile is drawn to. The exact geometry used by any drawing library is irrelevant.
+	 * @param points	A two-d array of integers representing the points
+	 */
 	public void setPoints(int points[][])
 	{
 		int smallest = Integer.MAX_VALUE;
@@ -123,16 +143,33 @@ public class HexTile
 		}
 	}
 
+	/**
+	 * A method to determine if a point (x, y) is within the hextile. Allows us to tell if a cell has been clicked
+	 * @param 	x	The x coord of the point
+	 * @param 	y	The y coord of the point
+	 * @return		True if the hextile contains the point, false otherwise.
+	 */
 	public boolean isPointInside(int x, int y)
 	{
 		return this.polygon.contains(x, y);
 	}
 
+	/**
+	 * Check if a point clicked is within the y bounds of the hex. In abstract terms, what this lets us do is check if a row could conceivably contain the point, to reduce the number of checks that are requried.
+	 * This is needed because a y point could be part of one of two rows if the point is in the ^v^v part of the hex intersections
+	 * @param 	y		The y coord of the point
+	 * @return			True if the point is within the vertical bounds
+	 */
 	public boolean isWithinVerticalBounds(int y)
 	{
 		return y < this.bottomMostPoint[1] && y > this.topMostPoint[1];
 	}
 	
+	/**
+	 * A method to check if a tile has a neighbour in a given direction
+	 * @param	direction	The direction to check
+	 * @return				Returns true if there is a hextile in the given direction. Otherwise false.
+	 */
 	public boolean hasNeighbour(Direction direction)
 	{
 		return (this.neighbours.containsKey(direction));
