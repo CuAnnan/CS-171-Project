@@ -1,10 +1,7 @@
 
 import java.util.ArrayList;
 
-import cs171.project2024.kearns.eamonn.Game;
-import cs171.project2024.kearns.eamonn.HexTile;
-import cs171.project2024.kearns.eamonn.Research;
-import cs171.project2024.kearns.eamonn.ResourceTile;
+import cs171.project2024.kearns.eamonn.*;
 import processing.core.PApplet;
 
 /**
