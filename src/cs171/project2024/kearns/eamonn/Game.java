@@ -188,7 +188,7 @@ public class Game
 	 */
 	public Game()
 	{
-		this(10);
+		this(11);
 	}
 
 	/**

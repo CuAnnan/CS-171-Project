@@ -3,23 +3,26 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 
 import cs171.project2024.kearns.eamonn.*;
+import cs171.project2024.kearns.eamonn.HexTile.Direction;
 import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.concurrent.ScheduledService;
-import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.ArcType;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  * A class to bootstrap the application, extends PApplet to handle all graphics stuff
@@ -41,8 +44,10 @@ public class ApplicationBootstrapper extends Application
 	 */
 	private EnumMap<Resource, VBox> resourceVboxes = new EnumMap<>(Resource.class);
 
-	private final Canvas canvas = new Canvas(600, 600);
-	private final GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
+	private Canvas canvas;
+	private GraphicsContext graphicsContext;
+
+	private final int CANVAS_WIDTH = 800;
 
 	/**
 	 * Overriding Application's start method.
@@ -50,15 +55,28 @@ public class ApplicationBootstrapper extends Application
 	@Override
 	public void start(Stage stage)
 	{
+		canvas =  new Canvas(CANVAS_WIDTH, CANVAS_WIDTH);
+		graphicsContext = canvas.getGraphicsContext2D();
+
 		BorderPane border = new BorderPane();
 		
 		VBox right = buildTextOutputUI();
 		border.setRight(right);
 		border.setCenter(canvas);
 
-		drawMap();
+		drawMap(true);
+		final double FPS = 1000/60;
 		
-		Scene scene = new Scene(border, 800, 600);
+		Timeline timeline = new Timeline(
+			new KeyFrame(Duration.millis(FPS), e->{
+				game.processTick();
+				drawMap(false);
+			})
+		);
+		timeline.setCycleCount(Animation.INDEFINITE);
+		timeline.play();
+
+		Scene scene = new Scene(border, CANVAS_WIDTH+200, CANVAS_WIDTH);
 		stage.setScene(scene);
 		stage.setResizable(false);
 		stage.setTitle("CS 171 Éamonn Kearns 60460770");
@@ -127,7 +145,7 @@ public class ApplicationBootstrapper extends Application
 	 * 					I think I can justify
 	 * @return			Returns a two dimensional array of doubles representing the points of the polygons vertices for later use.
 	 */
-	private double[][] polygon(float x, float y, float radius, int numPoints, int rotation)
+	private double[][] polygon(double x, double y, double radius, int numPoints, int rotation)
 	{
 		// Define and initialise the return value.
 		double[][] points= new double[2][numPoints];
@@ -159,7 +177,7 @@ public class ApplicationBootstrapper extends Application
 	 * @param	radius	The radius of the hexagon
 	 * @return	Returns the set of points of the hexagon
 	 */
-	double[][] hexagon(float x, float y, float radius)
+	double[][] hexagon(double x, double y, double radius)
 	{
 		return polygon(x, y, radius, 6, 30);
 	}
@@ -172,7 +190,7 @@ public class ApplicationBootstrapper extends Application
 	 * @param 	rotation	The rotation of the hexagon around the centre. I believe this is actually unused, but I'm not sure.
 	 * @return	Returns the set of points of the hexagon
 	 */
-	double[][] hexagon(float x, float y, float radius, int rotation)
+	double[][] hexagon(double x, double y, double radius, int rotation)
 	{
 		return polygon(x, y, radius, 6, 30 + rotation);
 	}
@@ -185,7 +203,7 @@ public class ApplicationBootstrapper extends Application
 	 * @param radius		The radius at which to draw the ResourceTile
 	 * @see	ResourceTile	See the ResourceTile class file for its implementation	
 	 */
-	public void drawResourceTile(ResourceTile tile, float x, float y, float radius)
+	public int[][] drawTile(ResourceTile tile, double x, double y, double radius)
 	{
 		graphicsContext.setLineWidth(1.0);
 		/*
@@ -204,19 +222,156 @@ public class ApplicationBootstrapper extends Application
 			double[][] internalPoints = hexagon(x, y, radius/4);
 			graphicsContext.setStroke(Color.BLACK);
 			graphicsContext.setFill(Color.BLACK);
-			graphicsContext.fillPolygon(externalPoints[0], externalPoints[1], externalPoints[1].length);
+			graphicsContext.fillPolygon(internalPoints[0], internalPoints[1], internalPoints[1].length);
 		}
 		else
 		{
-			
+			drawResourceTile(tile, x, y, radius, externalPoints);
+		}
+		drawTileWalls(tile, externalPoints);
+		int[][] pointsAsInts = new int[6][2];
+		for(int i = 0; i < 6; i++)
+		{
+			pointsAsInts[i][0] = (int)externalPoints[0][i];
+			pointsAsInts[i][1] = (int)externalPoints[1][i];
+		}
+		return pointsAsInts;
+	}
+
+
+	private void drawTileWalls(ResourceTile tile, double[][] externalPoints) {
+		for(Direction direction: Direction.values())
+		{
+			int index = -1;
+			if(direction == HexTile.Direction.NORTHEAST)
+			{
+				index = 4;
+			}
+			else if(direction == HexTile.Direction.NORTHWEST)
+			{
+				index = 3;
+			}
+			else if(direction == HexTile.Direction.WEST)
+			{
+				index = 5;
+			}
+			else if(direction == HexTile.Direction.EAST)
+			{
+				index = 2;
+			}
+			else if(direction == HexTile.Direction.SOUTHEAST)
+			{
+				index = 0;
+			}
+			else if(direction == HexTile.Direction.SOUTHWEST)
+			{
+				index = 1;
+			}
+			if(!tile.isConnected(direction))
+			{
+				graphicsContext.setLineWidth(2);
+				graphicsContext.setStroke(Color.BLACK);
+				graphicsContext.beginPath();
+				graphicsContext.moveTo(externalPoints[0][index], externalPoints[1][index]);
+				graphicsContext.lineTo(externalPoints[0][(index+1)%6], externalPoints[1][(index+1)%6]);
+				graphicsContext.stroke();
+			}
+		}
+	}
+
+
+	private void drawResourceTile(ResourceTile tile, double x, double y, double radius, double[][] externalPoints)
+	{
+		Color c = tile.isExplored()?Color.rgb(100,200,100):Color.rgb(100, 180, 100);
+		graphicsContext.setFill(c);
+		graphicsContext.setStroke(c);
+		graphicsContext.fillPolygon(externalPoints[0], externalPoints[1], externalPoints[1].length);
+		graphicsContext.strokePolygon(externalPoints[0], externalPoints[1], externalPoints[1].length);
+		if(tile.isExplored())
+		{
+			int i = 0;
+			for(ResourceTile.Resource r: ResourceTile.Resource.values())
+			{
+				// only draw the resources if they are discovered and the tile has them
+				if(game.isResourceDiscovered(r) && tile.hasResource(r))
+				{
+					///graphicsContext.setLineWidth(0); // we don't stroke
+					graphicsContext.setStroke(Color.BLACK);
+					Color f = null;
+					switch(r)
+					{
+						// figure out the color
+						case FISSILE:
+							f = Color.rgb(255,255,0);
+							break;
+						case OIL:
+							f = Color.rgb(139,69,19);
+							break;
+						case ORE:
+							f = Color.rgb(150,25,25);
+							break;
+						case WATER:
+							f = Color.rgb(0, 150, 255);
+							break;
+						case WOOD:
+							f = Color.rgb(0,200,0);
+							break;
+						case LIVESTOCK:
+							f = Color.rgb(200, 200, 200);
+							break;
+					}
+					graphicsContext.setFill(f);
+
+					// Figure out the centre of the point of the resource indicator by doing some maths
+					// I may revisit this position later as I add roads.
+					double centreX = (x - radius/1.8 + externalPoints[0][i] + externalPoints[0][(i+1)%6]) / 3;
+					double centreY = (y - radius/1.8 + externalPoints[1][i] + externalPoints[1][(i+1)%6]) / 3;
+					
+					// System.out.println(String.format("Should be drawing the resource %s at (%.2f, %.2f) with a radius of %.2f, a start angle of 0.00, an ar", r.label, centreX, centreX, radius));
+					graphicsContext.fillArc(centreX, centreY, radius/2.5, radius/2.5, 0.0, -360 * tile.getAvailableResource(r), ArcType.ROUND);
+					graphicsContext.strokeArc(centreX, centreY, radius/2.5, radius/2.5, 0.0, -360 * tile.getAvailableResource(r), ArcType.ROUND);
+				}
+				i++;
+			}
 		}
 	}
 	
 
-	private void drawMap()
+	private void drawMap(boolean firstTime)
 	{
-		
-		
+		graphicsContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_WIDTH);
+		int offset = 5;
+		// some needed math
+		// given the regular hexagon with radius (or side) length r
+		// the shortest distance from the center point to the nearest point on the edge (hw) can be
+		// derived using the relationship between the sides of the 30, 60, 90 triangle
+		// r will be the hypthenuse of the triangle
+		// hw will be r * cos(30)
+		// the width of the polygon will be twice that distance
+		double widthRation = Math.cos(30 * Math.PI / 180);
+		int mapBBoxWidth = ((int)Math.min(canvas.getWidth(), canvas.getHeight())) - offset;
+		double tileWidth = mapBBoxWidth / game.getDiameter();
+		double tileRadius = tileWidth / widthRation / 2;
+
+		double rowY = offset + mapBBoxWidth / 2 - tileRadius * 1.5 * (game.getRadius()-1);
+
+		for(ArrayList<ResourceTile> row:game.getTiles())
+		{
+			// the center of this row will be the width / 2
+			// so we offset the row size by one less than the length of the row
+			double columnX = offset + mapBBoxWidth / 2  - tileWidth / 2 * (row.size() - 1);
+			for(ResourceTile tile: row)
+			{
+				int[][] points = drawTile(tile, columnX, rowY, tileRadius);
+				if(firstTime)
+				{
+					tile.setPoints(points);
+				}
+				columnX += tileWidth;
+			}
+			
+			rowY += tileRadius * 1.5f;
+		}
 	}
 
 	public void draw()
@@ -230,7 +385,6 @@ public class ApplicationBootstrapper extends Application
 	public static void main(String[] args)
 	{
 		game = new Game();
-		System.out.println(game);
 		launch(ApplicationBootstrapper.class, args);
 	}
 }
