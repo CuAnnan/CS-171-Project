@@ -52,7 +52,7 @@ public class Game
 	/**
 	 * Whether or not an individual resource type has been discovered
 	 */
-	private EnumMap<ResourceTile.Resource, Boolean> resourceDiscovered;
+	private EnumMap<ResourceTile.Resource, Boolean> discoveredResources;
 	/**
 	 * The amount of each resource that has been mined overall
 	 */
@@ -94,7 +94,7 @@ public class Game
 		this.resourceTiles = new ArrayList<ArrayList<ResourceTile>>();
 		this.discoveredTiles = new ArrayList<ResourceTile>();
 		
-		this.resourceDiscovered = new EnumMap<>(ResourceTile.Resource.class);
+		this.discoveredResources = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesMined = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesRemaining = new EnumMap<>(ResourceTile.Resource.class);
 		this.pollutionRates = new EnumMap<>(ResourceTile.Resource.class);
@@ -115,7 +115,7 @@ public class Game
 		for(ResourceTile.Resource r:ResourceTile.Resource.values())
 		{
 			this.resourcesMined.put(r, 0.0);
-			this.resourceDiscovered.put(r, false);
+			this.discoveredResources.put(r, false);
 			this.resourcesRemaining.put(r, 0.0);
 		}
 		
@@ -161,7 +161,7 @@ public class Game
 		{
 			t.explore();
 			this.discoveredTiles.add(t);
-			for(ResourceTile.Resource r:this.resourceDiscovered.keySet())
+			for(ResourceTile.Resource r:this.discoveredResources.keySet())
 			{
 				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
 			}
@@ -418,6 +418,19 @@ public class Game
 	{
 		return diameter;
 	}
+
+	public ArrayList<Resource> getDiscoveredResources()
+	{
+		ArrayList<Resource> resources =  new ArrayList<Resource>();
+		for(Resource resource:this.discoveredResources.keySet())
+		{
+			if(this.discoveredResources.get(resource))
+			{
+				resources.add(resource);
+			}
+		}
+		return resources;
+	}
 	
 	/**
 	 * A method to determine if a given resource has been discovered
@@ -426,7 +439,7 @@ public class Game
 	 */
 	public boolean isResourceDiscovered(ResourceTile.Resource r)
 	{
-		return resourceDiscovered.get(r);
+		return discoveredResources.get(r);
 	}
 	
 	/**
@@ -435,7 +448,7 @@ public class Game
 	 */
 	public void discoverResource(ResourceTile.Resource r)
 	{
-		resourceDiscovered.put(r, true);
+		discoveredResources.put(r, true);
 	}
 	
 	/**
@@ -536,7 +549,7 @@ public class Game
 		{
 			t.explore();
 			this.discoveredTiles.add(t);
-			for(ResourceTile.Resource r:this.resourceDiscovered.keySet())
+			for(ResourceTile.Resource r:this.discoveredResources.keySet())
 			{
 				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
 			}

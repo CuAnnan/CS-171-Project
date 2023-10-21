@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "ApplicationBootstrapper",
+            "request": "launch",
+            "mainClass": "ApplicationBootstrapper",
+            "projectName": "CS-171-Project_52662d4e",
+            "vmArgs": "--module-path lib/javafx-sdk-21.0.1/lib --add-modules javafx.controls,javafx.fxml"
+        }
+    ]
+}
