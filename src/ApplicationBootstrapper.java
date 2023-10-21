@@ -154,7 +154,7 @@ public class ApplicationBootstrapper extends Application
 		{
 			VBox researchHBox = new VBox();
 			researchHBox.setOnMouseClicked(e->{
-				if(game.buyResearch(research))
+				if(game.buyResearch(research) && !research.isRepeatable())
 				{
 					this.researchesVBox.getChildren().remove(researchHBox);
 				}

@@ -99,6 +99,11 @@ public class Research
         this.complete = true;
     }
 
+    public boolean isRepeatable()
+    {
+        return this.repeatable;
+    }
+
     /**
      * Convert a Jackson JsonNode to a Research Object
      * @param json  The Jackson JsonNode object representing a Research.

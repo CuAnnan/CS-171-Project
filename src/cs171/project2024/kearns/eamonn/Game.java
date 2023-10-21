@@ -196,7 +196,7 @@ public class Game
 	 */
 	public Game()
 	{
-		this(2);
+		this(7);
 	}
 
 	/**
@@ -274,6 +274,10 @@ public class Game
 				this.resourcesRemaining.put(resource, this.resourcesRemaining.get(resource) - research.getCosts().get(resource));
 			}
 			research.purchase();
+			if(!research.isRepeatable())
+			{
+				// this is a special case research
+			}
 		}
 		return canAfford;
 	}
