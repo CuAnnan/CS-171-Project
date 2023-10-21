@@ -86,6 +86,11 @@ public class Research
         return this.complete;
     }
 
+    public void purchase()
+    {
+        this.complete = true;
+    }
+
     /**
      * A helper function that allows the Research be printed to the screen.
      */

@@ -69,7 +69,7 @@ public class Game
 	/**
 	 * This is just a helper for setting up the initial conditions
 	 */
-	private final double BASIC_EXTRACTION_RATE = 0.005;
+	private final double BASIC_EXTRACTION_RATE = 0.05;
 	
 	/**
 	 * The settlment tile gets handled discretely
@@ -240,6 +240,11 @@ public class Game
 		reader.close();
 	}
 
+	public ArrayList<Research> getResearches()
+	{
+		return this.researches;
+	}
+
 	/**
 	 * Return the researches that are available to be performed
 	 * @return	An ArrayList of Research objects
@@ -260,7 +265,7 @@ public class Game
 		ArrayList<Research> researches = new ArrayList<Research>();
 		for(Research r:this.researches)
 		{
-			if(!r.isResearched() && r.canAfford(this.resourcesMined))
+			if(!r.isResearched() && r.canAfford(this.resourcesMined) && !r.isResearched())
 			{
 				researches.add(r);
 			}
@@ -270,11 +275,28 @@ public class Game
 
 	/**
 	 * This is where I will implement the functionality to buy research
-	 * @param r
+	 * @param research
 	 */
-	public void buyResearch(Research r)
+	public boolean buyResearch(Research research)
 	{
-		System.out.println(r);
+		// ensuring no race condition prevents us going into debt
+		boolean canAfford = true;
+		for(Resource resource:research.getCosts().keySet())
+		{
+			if(this.getResourceAvailable(resource) < research.getCosts().get(resource))
+			{
+				canAfford = false;
+			}
+		}
+		if(canAfford)
+		{
+			for(Resource resource:research.getCosts().keySet())
+			{
+				this.resourcesRemaining.put(resource, this.resourcesRemaining.get(resource) - research.getCosts().get(resource));
+			}
+			research.purchase();
+		}
+		return canAfford;
 	}
 
 	public ResourceTile getSettlementTile()

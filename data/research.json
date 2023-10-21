@@ -1,0 +1,27 @@
+[
+    {
+        "name":"Forestry",
+        "repeatable":false,
+        "costs":
+        {
+            "Wood":100
+        }
+    },
+    {
+        "name":"Animal Husbandry",
+        "repeatable":false,
+        "costs":
+        {
+            "Wood":100,
+            "Livestock":100
+        }
+    },
+    {
+        "name":"Waterwheel",
+        "repeatable":false,
+        "costs":{
+            "Wood":100,
+            "Water":100
+        }
+    }
+]

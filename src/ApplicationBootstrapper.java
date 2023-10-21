@@ -10,6 +10,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -57,13 +58,12 @@ public class ApplicationBootstrapper extends Application
 	 * The graphicsContext to draw on
 	 */
 	private GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
-	// we use this to handle periodic but expensive updates
-	private int frameCount = 0;
+	
 
 	/**
 	 * Since we use text in multiple places, defining the basic font used is smurt
 	 */
-	private final static Font arial = Font.font("Arial", FontWeight.BOLD, 14);
+	private final static Font arial = Font.font("Arial", FontWeight.NORMAL, 14);
 
 	private EnumMap<Resource, Color> colors = new EnumMap<>(Resource.class);
 
@@ -75,6 +75,7 @@ public class ApplicationBootstrapper extends Application
 	public void start(Stage stage)
 	{
 		BorderPane border = new BorderPane();
+		Scene scene = new Scene(border, CANVAS_WIDTH+200, CANVAS_WIDTH);
 
 		colors.put(Resource.FISSILE,	Color.rgb(255,255,0));
 		colors.put(Resource.OIL,		Color.rgb(139,69,19));
@@ -84,7 +85,7 @@ public class ApplicationBootstrapper extends Application
 		colors.put(Resource.LIVESTOCK,	Color.rgb(200, 200, 200));
 		
 		
-		VBox right = buildTextOutputUI();
+		VBox right = buildTextOutputUI(scene);
 		border.setRight(right);
 		border.setCenter(canvas);
 
@@ -100,7 +101,7 @@ public class ApplicationBootstrapper extends Application
 		timeline.setCycleCount(Animation.INDEFINITE);
 		timeline.play();
 
-		Scene scene = new Scene(border, CANVAS_WIDTH+200, CANVAS_WIDTH);
+		
 		stage.setScene(scene);
 		stage.setResizable(false);
 		stage.setTitle("CS 171 Éamonn Kearns 60460770");
@@ -112,7 +113,8 @@ public class ApplicationBootstrapper extends Application
 	 * Cleaned this up out of start to make start easier to read
 	 * @return
 	 */
-	private VBox buildTextOutputUI() {
+	private VBox buildTextOutputUI(Scene scene)
+	{
 		VBox right = new VBox();
 		right.setStyle("-fx-background-color: #999999;");
 		right.setPadding(new Insets(0, 5, 0, 0));
@@ -126,6 +128,71 @@ public class ApplicationBootstrapper extends Application
 		titleBox.getChildren().add(title);
 		right.getChildren().add(titleBox);
 
+		right.getChildren().add(buildResourcesBox());
+
+		right.getChildren().add(getResearchBox(scene));
+
+		return right;
+	}
+
+	/**
+	 * Build the research box
+	 */
+	private VBox getResearchBox(Scene scene)
+	{
+		VBox researchesContainer = new VBox();
+		
+		Text researchText = new Text("Research:");
+		researchText.setFont(Font.font("Arial", FontWeight.BOLD, 17));
+		researchesContainer.getChildren().add(researchText);
+
+		this.researchesVBox = new VBox();
+		this.researchesVBox.setPadding(new Insets(0, 0, 0, 10));
+		this.researchesVBox.setPrefWidth(200);
+		researchesContainer.getChildren().add(this.researchesVBox);
+		for(Research research: game.getResearches())
+		{
+			VBox researchHBox = new VBox();
+			researchHBox.setOnMouseClicked(e->{
+				if(game.buyResearch(research))
+				{
+					this.researchesVBox.getChildren().remove(researchHBox);
+				}
+			});
+			researchHBox.setOnMouseEntered(e->{
+				scene.setCursor(Cursor.HAND);
+			});
+			researchHBox.setOnMouseExited(e->{
+				scene.setCursor(Cursor.DEFAULT);
+			});
+			
+			VBox rTitleBox = new VBox();
+			Text rTitleText = new Text(research.getName());
+			rTitleText.setFont(arial);
+			rTitleBox.getChildren().add(rTitleText);
+			researchHBox.getChildren().add(rTitleBox);
+
+			HBox costBox = new HBox();
+				
+			for(Resource resource: research.getCosts().keySet())
+			{
+				VBox resourceBox = new VBox();
+				Text costText = new Text(String.format("%.2f",research.getCosts().get(resource)));
+				costText.setFont(arial);
+				costText.setFill(colors.get(resource));
+				resourceBox.getChildren().add(costText);
+				costBox.getChildren().add(resourceBox);
+			}
+			researchHBox.getChildren().add(costBox);
+
+			this.researchesVBox.getChildren().add(researchHBox);
+		}
+
+		return researchesContainer;
+	}
+
+
+	private VBox buildResourcesBox() {
 		// a box to contain the individual resource outputs.
 		// needs to be a class property so as to be able to add to it when things get discovered
 		this.resourcesVBox = new VBox();
@@ -153,23 +220,7 @@ public class ApplicationBootstrapper extends Application
 			h.getChildren().add(at);
 			this.resourcesVBox.getChildren().add(h);
 		}
-		right.getChildren().add(this.resourcesVBox);
-
-		
-		VBox researchesContainer = new VBox();
-		
-		Text researchText = new Text("Research:");
-		researchText.setFont(Font.font("Arial", FontWeight.BOLD, 17));
-		researchesContainer.getChildren().add(researchText);
-
-		this.researchesVBox = new VBox();
-		this.researchesVBox.setPadding(new Insets(0, 0, 0, 10));
-		this.researchesVBox.setPrefWidth(200);
-		researchesContainer.getChildren().add(this.researchesVBox);
-
-		right.getChildren().add(researchesContainer);
-
-		return right;
+		return this.resourcesVBox;
 	}
 	/**
 	 * A class method to draw an arbitrary regular polygon at point (x, y), with a radius of r, a number of points numPoints with an initial rotation of rotation.
@@ -416,39 +467,6 @@ public class ApplicationBootstrapper extends Application
 		for(Resource resource:game.getDiscoveredResources())
 		{
 			this.resourceTexts.get(resource).setText(String.format("%.2f", game.getResourceAvailable(resource)));
-		}
-		// determine if we update for researches, which we do every nth tick
-		frameCount = (frameCount+1)%15;
-		if(frameCount == 0)
-		{
-			game.updateAvailableResearches();
-			// clear and then repopulate the researches
-			this.researchesVBox.getChildren().clear();
-			for(Research research: game.getAvailableResearches())
-			{
-				VBox researchHBox = new VBox();
-				
-				VBox rTitleBox = new VBox();
-				Text rTitleText = new Text(research.getName());
-				rTitleText.setFont(arial);
-				rTitleBox.getChildren().add(rTitleText);
-				researchHBox.getChildren().add(rTitleBox);
-
-				HBox costBox = new HBox();
-					
-				for(Resource resource: research.getCosts().keySet())
-				{
-					VBox resourceBox = new VBox();
-					Text costText = new Text(String.format("%.2f",research.getCosts().get(resource)));
-					costText.setFont(arial);
-					costText.setFill(colors.get(resource));
-					resourceBox.getChildren().add(costText);
-					costBox.getChildren().add(resourceBox);
-				}
-				researchHBox.getChildren().add(costBox);
-
-				this.researchesVBox.getChildren().add(researchHBox);
-			}
 		}
 	}
 
