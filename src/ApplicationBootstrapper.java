@@ -60,7 +60,12 @@ public class ApplicationBootstrapper extends Application
 	// we use this to handle periodic but expensive updates
 	private int frameCount = 0;
 
+	/**
+	 * Since we use text in multiple places, defining the basic font used is smurt
+	 */
 	private final static Font arial = Font.font("Arial", FontWeight.BOLD, 14);
+
+	private EnumMap<Resource, Color> colors = new EnumMap<>(Resource.class);
 
 	
 	/**
@@ -70,6 +75,14 @@ public class ApplicationBootstrapper extends Application
 	public void start(Stage stage)
 	{
 		BorderPane border = new BorderPane();
+
+		colors.put(Resource.FISSILE,	Color.rgb(255,255,0));
+		colors.put(Resource.OIL,		Color.rgb(139,69,19));
+		colors.put(Resource.ORE,		Color.rgb(150,25,25));
+		colors.put(Resource.WATER,		Color.rgb(0, 150, 255));
+		colors.put(Resource.WOOD, 		Color.rgb(0,200,0));
+		colors.put(Resource.LIVESTOCK,	Color.rgb(200, 200, 200));
+		
 		
 		VBox right = buildTextOutputUI();
 		border.setRight(right);
@@ -265,7 +278,11 @@ public class ApplicationBootstrapper extends Application
 		return pointsAsInts;
 	}
 
-	
+	/**
+	 * A method to draw the walls around a tile depending on whether or not it is connected to its neighbours.
+	 * @param tile				The tile to draw
+	 * @param externalPoints	The set of points around the tile
+	 */
 	private void drawTileWalls(ResourceTile tile, double[][] externalPoints) {
 		for(Direction direction: Direction.values())
 		{
@@ -306,7 +323,14 @@ public class ApplicationBootstrapper extends Application
 		}
 	}
 
-
+	/**
+	 * A method to draw a resource tile
+	 * @param tile				The ResourceTile to draw
+	 * @param x					The x coordinate of the tile on the canvas
+	 * @param y					The y coordinate of the tile on the canvas
+	 * @param radius			The radius of the tile from the centre to the vertex
+	 * @param externalPoints	The set of points around the tile
+	 */
 	private void drawResourceTile(ResourceTile tile, double x, double y, double radius, double[][] externalPoints)
 	{
 		Color c = tile.isExplored()?Color.rgb(100,200,100):Color.rgb(100, 180, 100);
@@ -325,30 +349,7 @@ public class ApplicationBootstrapper extends Application
 					// System.out.println(String.format("Have resource %s: %s", r.label, tile.hasResource(r)?"Yes":"No"));
 					///graphicsContext.setLineWidth(0); // we don't stroke
 					graphicsContext.setStroke(Color.BLACK);
-					Color f = null;
-					switch(r)
-					{
-						// figure out the color
-						case FISSILE:
-							f = Color.rgb(255,255,0);
-							break;
-						case OIL:
-							f = Color.rgb(139,69,19);
-							break;
-						case ORE:
-							f = Color.rgb(150,25,25);
-							break;
-						case WATER:
-							f = Color.rgb(0, 150, 255);
-							break;
-						case WOOD:
-							f = Color.rgb(0,200,0);
-							break;
-						case LIVESTOCK:
-							f = Color.rgb(200, 200, 200);
-							break;
-					}
-					graphicsContext.setFill(f);
+					graphicsContext.setFill(colors.get(r));
 
 					// Figure out the centre of the point of the resource indicator by doing some maths
 					// I may revisit this position later as I add roads.
@@ -364,7 +365,10 @@ public class ApplicationBootstrapper extends Application
 		}
 	}
 	
-
+	/**
+	 * Method to draw the map
+	 * @param firstTime	Whether or not this is the first time we're drawing the map, which is used to determine fi we stick the points in the tile as a property
+	 */
 	private void drawMap(boolean firstTime)
 	{
 		int offset = 5;
@@ -401,31 +405,50 @@ public class ApplicationBootstrapper extends Application
 		}
 	}
 
+	/**
+	 * The draw function which gets called every frame. 
+	 */
 	public void draw()
 	{
 		game.processTick();
 		drawMap(false);
+		// Updates the resources 
 		for(Resource resource:game.getDiscoveredResources())
 		{
 			this.resourceTexts.get(resource).setText(String.format("%.2f", game.getResourceAvailable(resource)));
 		}
-		frameCount = (frameCount+1)%30;
+		// determine if we update for researches, which we do every nth tick
+		frameCount = (frameCount+1)%15;
 		if(frameCount == 0)
 		{
 			game.updateAvailableResearches();
-		}
-		this.researchesVBox.getChildren().clear();
-		for(Research research: game.getAvailableResearches())
-		{
-			HBox researchHBox = new HBox();
-			
-			VBox rTitleBox = new VBox();
-			Text rTitleText = new Text(research.getName());
-			rTitleText.setFont(arial);
-			rTitleBox.getChildren().add(rTitleText);
-			researchHBox.getChildren().add(rTitleBox);
+			// clear and then repopulate the researches
+			this.researchesVBox.getChildren().clear();
+			for(Research research: game.getAvailableResearches())
+			{
+				VBox researchHBox = new VBox();
+				
+				VBox rTitleBox = new VBox();
+				Text rTitleText = new Text(research.getName());
+				rTitleText.setFont(arial);
+				rTitleBox.getChildren().add(rTitleText);
+				researchHBox.getChildren().add(rTitleBox);
 
-			this.researchesVBox.getChildren().add(researchHBox);
+				HBox costBox = new HBox();
+					
+				for(Resource resource: research.getCosts().keySet())
+				{
+					VBox resourceBox = new VBox();
+					Text costText = new Text(String.format("%.2f",research.getCosts().get(resource)));
+					costText.setFont(arial);
+					costText.setFill(colors.get(resource));
+					resourceBox.getChildren().add(costText);
+					costBox.getChildren().add(resourceBox);
+				}
+				researchHBox.getChildren().add(costBox);
+
+				this.researchesVBox.getChildren().add(researchHBox);
+			}
 		}
 	}
 
