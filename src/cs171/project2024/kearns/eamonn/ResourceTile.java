@@ -102,6 +102,23 @@ public class ResourceTile extends HexTile
 			
 		}
 	}
+
+	public void blankTile()
+	{
+		for(Resource r:Resource.values())
+		{
+			this.remainingResources.put(r, 0.0);
+			this.resources.put(r, 0.0);
+			this.hasResource.put(r, false);
+		}
+	}
+
+	public void setAvailableResource(Resource resource, double amount)
+	{
+		this.remainingResources.put(resource, amount);
+		this.resources.put(resource, amount);
+		this.hasResource.put(resource, true);
+	}
 	
 	/**
 	 * Getter for a given resource

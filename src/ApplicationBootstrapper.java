@@ -42,22 +42,33 @@ public class ApplicationBootstrapper extends Application
 	/**
 	 * An enum map mapping the Resource to the VBox with the text used to display the amount of the resource available.
 	 */
-	private EnumMap<Resource, VBox> resourceVboxes = new EnumMap<>(Resource.class);
+	private EnumMap<Resource, Text> resourceTexts = new EnumMap<>(Resource.class);
+	private VBox researchesVBox;
 
-	private Canvas canvas;
-	private GraphicsContext graphicsContext;
-
+	/**
+	 * A value to determine the size of the canvas, the size of the scene is derived from that
+	 */
 	private final int CANVAS_WIDTH = 800;
+	/**
+	 * A canvas to draw on
+	 */
+	private Canvas canvas =  new Canvas(CANVAS_WIDTH, CANVAS_WIDTH);
+	/**
+	 * The graphicsContext to draw on
+	 */
+	private GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
+	// we use this to handle periodic but expensive updates
+	private int frameCount = 0;
 
+	private final static Font arial = Font.font("Arial", FontWeight.BOLD, 14);
+
+	
 	/**
 	 * Overriding Application's start method.
 	 */
 	@Override
 	public void start(Stage stage)
 	{
-		canvas =  new Canvas(CANVAS_WIDTH, CANVAS_WIDTH);
-		graphicsContext = canvas.getGraphicsContext2D();
-
 		BorderPane border = new BorderPane();
 		
 		VBox right = buildTextOutputUI();
@@ -65,12 +76,12 @@ public class ApplicationBootstrapper extends Application
 		border.setCenter(canvas);
 
 		drawMap(true);
+		// set the fps to 60 frames per second (ish)
 		final double FPS = 1000/60;
 		
 		Timeline timeline = new Timeline(
 			new KeyFrame(Duration.millis(FPS), e->{
-				game.processTick();
-				drawMap(false);
+				draw();
 			})
 		);
 		timeline.setCycleCount(Animation.INDEFINITE);
@@ -89,16 +100,16 @@ public class ApplicationBootstrapper extends Application
 	 * @return
 	 */
 	private VBox buildTextOutputUI() {
-		Font arial = Font.font("Arial", FontWeight.BOLD, 14);
-
 		VBox right = new VBox();
+		right.setStyle("-fx-background-color: #999999;");
+		right.setPadding(new Insets(0, 5, 0, 0));
 		right.setPrefWidth(200);
 		
 		// A box to contain the Title "Resources"
 		HBox titleBox = new HBox();
-		titleBox.setPadding(new Insets(0,0,5,0));
+		titleBox.setPadding(new Insets(10,0,5,0));
 		Text title = new Text("Resources");
-		title.setFont(arial);
+		title.setFont(Font.font("Arial", FontWeight.BOLD, 17));
 		titleBox.getChildren().add(title);
 		right.getChildren().add(titleBox);
 
@@ -106,15 +117,17 @@ public class ApplicationBootstrapper extends Application
 		// needs to be a class property so as to be able to add to it when things get discovered
 		this.resourcesVBox = new VBox();
 		this.resourcesVBox.setPrefWidth(200);
+		this.resourcesVBox.setPrefHeight(110);
+		
 		for(Resource resource: game.getDiscoveredResources())
 		{
 			HBox h = new HBox();
-
+			
 			VBox rt = new VBox();
 			Text resourceText = new Text(String.format("%s: ",resource.label));
 			resourceText.setFont(arial);
 			rt.getChildren().add(resourceText);
-			rt.setPrefWidth(100);
+			rt.setPrefWidth(130);
 			rt.setPadding(new Insets(0, 0, 0, 10));
 			h.getChildren().add(rt);
 			
@@ -123,12 +136,26 @@ public class ApplicationBootstrapper extends Application
 			resourceAmount.setFont(arial);
 			at.getChildren().add(resourceAmount);
 			// we need to store the amount as a property so as to be able to update it.
-			this.resourceVboxes.put(resource, at);
+			this.resourceTexts.put(resource, resourceAmount);
 			h.getChildren().add(at);
 			this.resourcesVBox.getChildren().add(h);
 		}
-		
 		right.getChildren().add(this.resourcesVBox);
+
+		
+		VBox researchesContainer = new VBox();
+		
+		Text researchText = new Text("Research:");
+		researchText.setFont(Font.font("Arial", FontWeight.BOLD, 17));
+		researchesContainer.getChildren().add(researchText);
+
+		this.researchesVBox = new VBox();
+		this.researchesVBox.setPadding(new Insets(0, 0, 0, 10));
+		this.researchesVBox.setPrefWidth(200);
+		researchesContainer.getChildren().add(this.researchesVBox);
+
+		right.getChildren().add(researchesContainer);
+
 		return right;
 	}
 	/**
@@ -238,7 +265,7 @@ public class ApplicationBootstrapper extends Application
 		return pointsAsInts;
 	}
 
-
+	
 	private void drawTileWalls(ResourceTile tile, double[][] externalPoints) {
 		for(Direction direction: Direction.values())
 		{
@@ -295,6 +322,7 @@ public class ApplicationBootstrapper extends Application
 				// only draw the resources if they are discovered and the tile has them
 				if(game.isResourceDiscovered(r) && tile.hasResource(r))
 				{
+					// System.out.println(String.format("Have resource %s: %s", r.label, tile.hasResource(r)?"Yes":"No"));
 					///graphicsContext.setLineWidth(0); // we don't stroke
 					graphicsContext.setStroke(Color.BLACK);
 					Color f = null;
@@ -324,8 +352,8 @@ public class ApplicationBootstrapper extends Application
 
 					// Figure out the centre of the point of the resource indicator by doing some maths
 					// I may revisit this position later as I add roads.
-					double centreX = (x - radius/1.8 + externalPoints[0][i] + externalPoints[0][(i+1)%6]) / 3;
-					double centreY = (y - radius/1.8 + externalPoints[1][i] + externalPoints[1][(i+1)%6]) / 3;
+					double centreX = (externalPoints[0][i] + externalPoints[0][(i+1)%6] + externalPoints[0][(i+2)%6] - radius/1.8) / 3;
+					double centreY = (externalPoints[1][i] + externalPoints[1][(i+1)%6] + externalPoints[1][(i+2)%6] - radius/1.8) / 3;
 					
 					// System.out.println(String.format("Should be drawing the resource %s at (%.2f, %.2f) with a radius of %.2f, a start angle of 0.00, an ar", r.label, centreX, centreX, radius));
 					graphicsContext.fillArc(centreX, centreY, radius/2.5, radius/2.5, 0.0, -360 * tile.getAvailableResource(r), ArcType.ROUND);
@@ -339,7 +367,6 @@ public class ApplicationBootstrapper extends Application
 
 	private void drawMap(boolean firstTime)
 	{
-		graphicsContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_WIDTH);
 		int offset = 5;
 		// some needed math
 		// given the regular hexagon with radius (or side) length r
@@ -376,7 +403,30 @@ public class ApplicationBootstrapper extends Application
 
 	public void draw()
 	{
+		game.processTick();
+		drawMap(false);
+		for(Resource resource:game.getDiscoveredResources())
+		{
+			this.resourceTexts.get(resource).setText(String.format("%.2f", game.getResourceAvailable(resource)));
+		}
+		frameCount = (frameCount+1)%30;
+		if(frameCount == 0)
+		{
+			game.updateAvailableResearches();
+		}
+		this.researchesVBox.getChildren().clear();
+		for(Research research: game.getAvailableResearches())
+		{
+			HBox researchHBox = new HBox();
+			
+			VBox rTitleBox = new VBox();
+			Text rTitleText = new Text(research.getName());
+			rTitleText.setFont(arial);
+			rTitleBox.getChildren().add(rTitleText);
+			researchHBox.getChildren().add(rTitleBox);
 
+			this.researchesVBox.getChildren().add(researchHBox);
+		}
 	}
 
 

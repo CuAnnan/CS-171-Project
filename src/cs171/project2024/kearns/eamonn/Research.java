@@ -72,6 +72,11 @@ public class Research
         return canAfford;
     }
 
+    public EnumMap<Resource, Double> getCosts()
+    {
+        return this.costs;
+    }
+
     /**
      * Getter for whether the research has been concluded.
      * @return

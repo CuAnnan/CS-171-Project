@@ -69,7 +69,7 @@ public class Game
 	/**
 	 * This is just a helper for setting up the initial conditions
 	 */
-	private final double BASIC_EXTRACTION_RATE = 0.25;
+	private final double BASIC_EXTRACTION_RATE = 0.005;
 	
 	/**
 	 * The settlment tile gets handled discretely
@@ -160,11 +160,17 @@ public class Game
 		for(ResourceTile t: this.settlementTile.getNeighbours())
 		{
 			t.explore();
-			this.discoveredTiles.add(t);
+			t.blankTile();
 			for(ResourceTile.Resource r:this.discoveredResources.keySet())
 			{
-				t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
+				if(this.discoveredResources.get(r))
+				{
+					// make sure the starting tiles have enough of the basic resources to kickstart the game.
+					t.setAvailableResource(r, 100.0);
+					t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
+				}
 			}
+			this.discoveredTiles.add(t);
 		}
 
 		// load the research and "handle" the exceptions
@@ -188,7 +194,7 @@ public class Game
 	 */
 	public Game()
 	{
-		this(11);
+		this(8);
 	}
 
 	/**
