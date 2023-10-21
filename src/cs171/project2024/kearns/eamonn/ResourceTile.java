@@ -193,7 +193,7 @@ public class ResourceTile extends HexTile
 		}
 		double amountTaken = Math.min(this.remainingResources.get(r), extractionRates.get(r));
 		double amountLeft = this.remainingResources.get(r) - amountTaken;
-		if(amountLeft < 0.0)
+		if(amountLeft <= 0.0)
 		{
 			amountLeft = 0.0;
 			this.hasResource.put(r, false);

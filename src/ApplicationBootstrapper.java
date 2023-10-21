@@ -214,6 +214,7 @@ public class ApplicationBootstrapper extends Application
 			VBox at = new VBox();
 			Text resourceAmount = new Text(String.format("%.2f",game.getResourceAvailable(resource)));
 			resourceAmount.setFont(arial);
+			resourceAmount.setFill(colors.get(resource));
 			at.getChildren().add(resourceAmount);
 			// we need to store the amount as a property so as to be able to update it.
 			this.resourceTexts.put(resource, resourceAmount);
@@ -397,7 +398,6 @@ public class ApplicationBootstrapper extends Application
 				// only draw the resources if they are discovered and the tile has them
 				if(game.isResourceDiscovered(r) && tile.hasResource(r))
 				{
-					// System.out.println(String.format("Have resource %s: %s", r.label, tile.hasResource(r)?"Yes":"No"));
 					///graphicsContext.setLineWidth(0); // we don't stroke
 					graphicsContext.setStroke(Color.BLACK);
 					graphicsContext.setFill(colors.get(r));

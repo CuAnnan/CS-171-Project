@@ -1,12 +1,14 @@
 package cs171.project2024.kearns.eamonn;
 
-import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Stack;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
 
@@ -23,7 +25,7 @@ public class Game
 	/**
 	 * The csv file determining the names and costs of the researches.
 	 */
-	private final static String RESEARCH_FILE_PATH = "./data/research.csv";
+	private final static String RESEARCH_FILE_PATH = "./data/research.json";
 	/**
 	 * The available researches. This is populated by a somewhat expensive loop and so it is advisable to throttle its upkeep or develop a better algorithm.
 	 * @see Game#updateAvailableResearches()
@@ -194,7 +196,7 @@ public class Game
 	 */
 	public Game()
 	{
-		this(8);
+		this(2);
 	}
 
 	/**
@@ -206,38 +208,15 @@ public class Game
 	 */
 	public void loadResearch() throws IOException
 	{
-		BufferedReader reader = new BufferedReader(new FileReader(RESEARCH_FILE_PATH));
-		String currentLine = reader.readLine();
-		// we don't actually do anything with this line
-		boolean firstLine = true;
-		ArrayList<String> researchTitles = new ArrayList<String>();
-		while(currentLine != null)
+		ObjectMapper mapper = new ObjectMapper();
+		File file = new File(RESEARCH_FILE_PATH);
+		JsonNode node = mapper.readTree(file);
+		for(JsonNode researchNode: node)
 		{
-			String[] lineParts = currentLine.split(",");
-			if(firstLine)
-			{
-				for(String part:lineParts)
-				{
-					researchTitles.add(part);
-				}
-			}
-			else
-			{
-				EnumMap<Resource, Double> resources = new EnumMap<>(Resource.class);
-				for(int i = 1; i < lineParts.length; i++)
-				{
-					if(lineParts[i] != "")
-					{
-						resources.put(Resource.byLabel(researchTitles.get(i)), Double.parseDouble(lineParts[i]));
-					}
-				}
-				Research r = new Research(lineParts[0], resources);
-				this.researches.add(r);
-			}
-			firstLine = false;
-			currentLine = reader.readLine();
+			this.researches.add(
+				Research.fromJsonNode(researchNode)
+			);
 		}
-		reader.close();
 	}
 
 	public ArrayList<Research> getResearches()

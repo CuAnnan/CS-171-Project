@@ -1,6 +1,9 @@
 package cs171.project2024.kearns.eamonn;
 
 import java.util.EnumMap;
+import java.util.Iterator;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
 
@@ -21,6 +24,7 @@ public class Research
      * A boolean to determine if the research has been completed
      */
     protected boolean complete;
+    protected boolean repeatable;
 
     /**
      * A helper constructor for new researches that are not complete.
@@ -29,7 +33,7 @@ public class Research
      */
     public Research(String name, EnumMap<Resource, Double> costs)
     {
-        this(name, costs, false);
+        this(name, costs, false, false);
     }
     
     /**
@@ -38,11 +42,12 @@ public class Research
      * @param costs     The costs associated with it as an EnumMap of Resources to Doubles
      * @param complete  Whether or not the research has already been complete
      */
-    public Research(String name, EnumMap<Resource, Double> costs, boolean complete)
+    public Research(String name, EnumMap<Resource, Double> costs, boolean complete, boolean repeatable)
     {
         this.name = name;
         this.costs = costs;
         this.complete = complete;
+        this.repeatable = repeatable;
     }
 
     /**
@@ -86,9 +91,35 @@ public class Research
         return this.complete;
     }
 
+    /**
+     * Set the complete field to true
+     */
     public void purchase()
     {
         this.complete = true;
+    }
+
+    /**
+     * Convert a Jackson JsonNode to a Research Object
+     * @param json  The Jackson JsonNode object representing a Research.
+     * @return      The Research Object
+     */
+    public static Research fromJsonNode(JsonNode json)
+    {
+        
+        EnumMap<Resource, Double> costs = new EnumMap<>(Resource.class);
+        JsonNode costsNode = json.get("costs");
+        Iterator<String> iterator = costsNode.fieldNames();
+        boolean complete = json.has("complete")?json.get("complete").asBoolean():false;
+        boolean repeatable = json.has("repeatable")?json.get("repeatable").asBoolean():false;
+        iterator.forEachRemaining(e->{
+            costs.put(
+                Resource.byLabel(e),
+                Double.parseDouble(costsNode.get(e).asText())
+            );
+        });
+        Research r = new Research(json.get("name").asText(), costs, complete, repeatable);
+        return r;
     }
 
     /**
