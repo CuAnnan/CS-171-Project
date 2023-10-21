@@ -42,6 +42,7 @@ public class ApplicationBootstrapper extends Application
 	private EnumMap<Resource, VBox> resourceVboxes = new EnumMap<>(Resource.class);
 
 	private final Canvas canvas = new Canvas(600, 600);
+	private final GraphicsContext graphicsContext = canvas.getGraphicsContext2D();
 
 	/**
 	 * Overriding Application's start method.
@@ -112,10 +113,109 @@ public class ApplicationBootstrapper extends Application
 		right.getChildren().add(this.resourcesVBox);
 		return right;
 	}
+	/**
+	 * A class method to draw an arbitrary regular polygon at point (x, y), with a radius of r, a number of points numPoints with an initial rotation of rotation.
+	 * @implNote		Derived from first principles. This may well look identical to any other solution for this, because there's really only one way to solve it.
+	 * 					This could be further abstracted to map all polygons (so all n-sided "stars")
+	 * @param x			The x-Coordinate of the centre of the regular polygon
+	 * @param y			The y-Coordinate of the centre of the regular polygon
+	 * @param radius	The radius of the regular polygon
+	 * @param numPoints	The number of points in the regular polygon
+	 * @param rotation	An angle in degrees expressed as the counter-clockwise rotation about the origin where 0 degrees (which equals 0 radians) is the angle
+	 * 					such that cos(0) = 1. While the standard for cos and sin and all functions are radians, they are harder 
+	 * 					to express in code, both in terms of legiblity and in terms of reusability. This is a design decision that
+	 * 					I think I can justify
+	 * @return			Returns a two dimensional array of doubles representing the points of the polygons vertices for later use.
+	 */
+	private double[][] polygon(float x, float y, float radius, int numPoints, int rotation)
+	{
+		// Define and initialise the return value.
+		double[][] points= new double[2][numPoints];
+		// Convert the initial rotation into radians
+		double offset = rotation * Math.PI / 180;
+		// use Processing's arbitrary polygon functionality to start a shape
+		for(int i = 0; i < numPoints; i++)
+		{
+			// convert rotation to radians
+			double theta = offset + Math.PI * 2 / numPoints * i;
+			// unit circle multiplied by the radius and added to the x and y coordinates.
+			double vx = x + Math.cos(theta) * radius;
+			double vy = y + Math.sin(theta) * radius;
+			// add the vertex to the shape to be drawn
+			// store the points as a two dimsensional array for later use
+			points[0][i] = vx;
+			points[1][i] = vy;
+		}
+		// end the shape
+		// return the points
+		return points;
+	}
+	
+	/**
+	 * A helper that calls polygon specifically for a hexagon where we only want the hex to be "pointed up"
+	 * @see   	ApplicationBootstrapper#polygon(float, float, float, int, int)	for the actual implementation
+	 * @param	x		The x-coordinate of the hexagon
+	 * @param	y		The y-coordinate of the hexagon
+	 * @param	radius	The radius of the hexagon
+	 * @return	Returns the set of points of the hexagon
+	 */
+	double[][] hexagon(float x, float y, float radius)
+	{
+		return polygon(x, y, radius, 6, 30);
+	}
+	
+	/**
+	 * A helper that calls polygon specifically for a hexagon where the angle of rotation, relative to "up" is defined in degrees 
+	 * @param	x			The x-coordinate of the hexagon
+	 * @param	y			The y-coordinate of the hexagon
+	 * @param	radius		The radius of the hexagon
+	 * @param 	rotation	The rotation of the hexagon around the centre. I believe this is actually unused, but I'm not sure.
+	 * @return	Returns the set of points of the hexagon
+	 */
+	double[][] hexagon(float x, float y, float radius, int rotation)
+	{
+		return polygon(x, y, radius, 6, 30 + rotation);
+	}
+
+	/**
+	 * This method draws an individual ResourceTile and a crude representation of the resources available on it.
+	 * @param tile			The ResourceTile to be drawn
+	 * @param x				The x-coordinate of the centre of the ResourceTile
+	 * @param y				The x-coordinate of the centre of the ResourceTile
+	 * @param radius		The radius at which to draw the ResourceTile
+	 * @see	ResourceTile	See the ResourceTile class file for its implementation	
+	 */
+	public void drawResourceTile(ResourceTile tile, float x, float y, float radius)
+	{
+		graphicsContext.setLineWidth(1.0);
+		/*
+		 * We want the points of the outside hexagon (occupied tiles have an internal hexagon).
+		 * We use this to draw the state of the walls, which cannot be done with a plain stroked hexagon.
+		 */
+		double[][] externalPoints = hexagon(x, y, radius);
+		if(tile.isOccupied())
+		{
+			// I could write this this to leverage polymorphism by checking .class, but this property is simpler and more flexible, especially if I intend at a
+			// later point to model and represent expansion and the effect that has on the simulated world. Again, it's a design decision which I may end up having
+			// to revisit at a later point.
+			graphicsContext.setStroke(Color.rgb(120, 120, 120));
+			graphicsContext.setFill(Color.rgb(120, 120, 120));
+			graphicsContext.fillPolygon(externalPoints[0], externalPoints[1], externalPoints[1].length);
+			double[][] internalPoints = hexagon(x, y, radius/4);
+			graphicsContext.setStroke(Color.BLACK);
+			graphicsContext.setFill(Color.BLACK);
+			graphicsContext.fillPolygon(externalPoints[0], externalPoints[1], externalPoints[1].length);
+		}
+		else
+		{
+			
+		}
+	}
+	
 
 	private void drawMap()
 	{
-		GraphicsContext gc = canvas.getGraphicsContext2D();
+		
 		
 	}
 
