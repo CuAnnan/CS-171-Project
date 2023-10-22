@@ -49,7 +49,7 @@ public class ApplicationBootstrapper extends Application
 	/**
 	 * A value to determine the size of the canvas, the size of the scene is derived from that
 	 */
-	private final int CANVAS_WIDTH = 800;
+	private final int CANVAS_WIDTH = 900;
 	/**
 	 * A canvas to draw on
 	 */
@@ -349,11 +349,11 @@ public class ApplicationBootstrapper extends Application
 			}
 			else if(direction == HexTile.Direction.WEST)
 			{
-				index = 5;
+				index = 2;
 			}
 			else if(direction == HexTile.Direction.EAST)
 			{
-				index = 2;
+				index = 5;
 			}
 			else if(direction == HexTile.Direction.SOUTHEAST)
 			{

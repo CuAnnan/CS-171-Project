@@ -10,6 +10,7 @@ import java.util.Stack;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cs171.project2024.kearns.eamonn.HexTile.Direction;
 import cs171.project2024.kearns.eamonn.ResourceTile.Resource;
 
 /**
@@ -26,11 +27,6 @@ public class Game
 	 * The csv file determining the names and costs of the researches.
 	 */
 	private final static String RESEARCH_FILE_PATH = "./data/research.json";
-	/**
-	 * The available researches. This is populated by a somewhat expensive loop and so it is advisable to throttle its upkeep or develop a better algorithm.
-	 * @see Game#updateAvailableResearches()
-	 */
-	private ArrayList<Research> availableResearches;
 
 	/**
 	 * A two dimensional array list to hold the ResourceTiles 
@@ -100,8 +96,6 @@ public class Game
 		this.resourcesMined = new EnumMap<>(ResourceTile.Resource.class);
 		this.resourcesRemaining = new EnumMap<>(ResourceTile.Resource.class);
 		this.pollutionRates = new EnumMap<>(ResourceTile.Resource.class);
-
-		this.availableResearches = new ArrayList<Research>();
 		
 		/*
 		 *	These may need tweaking 
@@ -113,13 +107,16 @@ public class Game
 		pollutionRates.put(ResourceTile.Resource.FISSILE,	1.0);
 		pollutionRates.put(ResourceTile.Resource.ORE,		1.0);
 
-		
 		for(ResourceTile.Resource r:ResourceTile.Resource.values())
 		{
 			this.resourcesMined.put(r, 0.0);
 			this.discoveredResources.put(r, false);
 			this.resourcesRemaining.put(r, 0.0);
 		}
+
+		this.discoverResource(ResourceTile.Resource.WOOD);
+		this.discoverResource(ResourceTile.Resource.WATER);
+		this.discoverResource(ResourceTile.Resource.LIVESTOCK);
 		
 		
 		// the middle row will have the map radius radius to one side, and that many minus one to the other.
@@ -145,36 +142,12 @@ public class Game
 		this.settlementTile = this.resourceTiles.get(radius-1).get(radius-1).occupy();
 		// Set every tile to be beside the tiles they should be beside
 		this.generateNeighbourConnections();
+		
+
 		// build the connections
 		this.generateTileConnections();
 		
-		// mark wood, water and livestock as discovered
-		this.discoverResource(ResourceTile.Resource.WOOD);
-		this.discoverResource(ResourceTile.Resource.WATER);
-		this.discoverResource(ResourceTile.Resource.LIVESTOCK);
-		// for(ResourceTile.Resource r: ResourceTile.Resource.values())
-		// {
-		// 	this.discoverResource(r);
-		// }
-
 		
-		// reveal the initial neighbours of the settlement tile
-		for(ResourceTile t: this.settlementTile.getNeighbours())
-		{
-			t.explore();
-			t.blankTile();
-			for(ResourceTile.Resource r:this.discoveredResources.keySet())
-			{
-				if(this.discoveredResources.get(r))
-				{
-					// make sure the starting tiles have enough of the basic resources to kickstart the game.
-					t.setAvailableResource(r, 100.0);
-					t.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
-				}
-			}
-			this.discoveredTiles.add(t);
-		}
-
 		// load the research and "handle" the exceptions
 		try
 		{
@@ -188,7 +161,6 @@ public class Game
 		{
 			System.err.println("There was a problem reading the research data.");
 		}
-		
 	}
 	
 	/**
@@ -196,7 +168,7 @@ public class Game
 	 */
 	public Game()
 	{
-		this(7);
+		this(11);
 	}
 
 	/**
@@ -225,34 +197,6 @@ public class Game
 	}
 
 	/**
-	 * Return the researches that are available to be performed
-	 * @return	An ArrayList of Research objects
-	 * @see		Research
-	 */
-	public ArrayList<Research> getAvailableResearches()
-	{
-		return this.availableResearches;
-	}
-
-	/**
-	 * Iterates through all of the researches and, if they can be afforded, adds them to the available researches property.
-	 * This has been separated from getAvailableResearches because, for one reason or another, clicks were not registering on it. It may have been a race condition between the draw and the update of the variable.
-	 * @see Research#canAfford()
-	 */
-	public void updateAvailableResearches()
-	{
-		ArrayList<Research> researches = new ArrayList<Research>();
-		for(Research r:this.researches)
-		{
-			if(!r.isResearched() && r.canAfford(this.resourcesMined) && !r.isResearched())
-			{
-				researches.add(r);
-			}
-		}
-		this.availableResearches = researches;
-	}
-
-	/**
 	 * This is where I will implement the functionality to buy research
 	 * @param research
 	 */
@@ -276,7 +220,7 @@ public class Game
 			research.purchase();
 			if(!research.isRepeatable())
 			{
-				// this is a special case research
+				// this is a special case research so handle it
 			}
 		}
 		return canAfford;
@@ -310,10 +254,6 @@ public class Game
 	 */
 	public void generateNeighbourConnections()
 	{
-		/*
-		 * 
-		 * 
-		 */
 		for(ArrayList<ResourceTile> row : this.resourceTiles)
 		{
 			for(ResourceTile tile: row)
@@ -321,7 +261,7 @@ public class Game
 				// we always want to add left right relationships. They're nice and simple.
 				if(tile.getX() + 1 < row.size())
 				{
-					tile.addNeighbour(row.get(tile.getX()+1), ResourceTile.Direction.WEST);
+					tile.addNeighbour(row.get(tile.getX()+1), ResourceTile.Direction.EAST);
 				}
 				
 				// if we're on a row that is above the centre row, we consider cells in the row below us to be left shifted
@@ -378,6 +318,25 @@ public class Game
 		}
 		
 	}
+
+	private ResourceTile initialConnection(Direction direction)
+	{
+		ResourceTile hex = (ResourceTile)this.settlementTile.getNeighbour(direction);
+		hex.blankTile();
+		for(ResourceTile.Resource r:this.discoveredResources.keySet())
+		{
+			if(this.discoveredResources.get(r))
+			{
+				hex.setAvailableResource(r, 100.0);
+				hex.setResourceExtractionRate(r, BASIC_EXTRACTION_RATE);
+			}
+		}
+		this.settlementTile.addConnection(direction);
+		this.discoveredTiles.add(hex);
+		hex.visit();
+		hex.explore();
+		return hex;
+	}
 	
 	/**
 	 * The method to generate the geography using a depth first map stack algorithm
@@ -385,31 +344,41 @@ public class Game
 	 */
 	public void generateTileConnections()
 	{
-		HexTile searchTile = this.settlementTile;
-		searchTile.visit();
+		HexTile nw = this.initialConnection(Direction.NORTHWEST),
+				sw = this.initialConnection(Direction.SOUTHWEST),
+				e  = this.initialConnection(Direction.EAST);
 		
-		Stack<HexTile> searchSpace = new Stack<HexTile>();
-		searchSpace.push(searchTile);
-		while(searchSpace.size() > 0)
+		ArrayList<Stack<HexTile>> searchSpaces = new ArrayList<Stack<HexTile>>();
+		searchSpaces.add(new Stack<HexTile>());
+		searchSpaces.add(new Stack<HexTile>());
+		searchSpaces.add(new Stack<HexTile>());
+		searchSpaces.get(0).push(nw);
+		searchSpaces.get(1).push(sw);
+		searchSpaces.get(2).push(e);
+
+		while(searchSpaces.get(0).size() > 0 || searchSpaces.get(1).size() > 0 || searchSpaces.get(2).size() > 0)
 		{
-			searchTile = searchSpace.pop();
-			// pick a random direction
-			HexTile.Direction d = searchTile.getRandomUnvisitedNeighbourDirection();
-			// if it's not null, there is an unvisited neighbour in that direction
-			if(d != null)
+			HexTile searchTile = null;
+			for(Stack<HexTile> searchSpace:searchSpaces)
 			{
-				searchTile.addConnection(d);
-				searchSpace.push(searchTile);
-				HexTile neighbour = searchTile.getNeighbour(d);
-				neighbour.visit();
-				searchSpace.push(neighbour);
+				if(searchSpace.size() > 0)
+				{
+					searchTile = searchSpace.pop();
+					// pick a random direction
+					HexTile.Direction d = searchTile.getRandomUnvisitedNeighbourDirection();
+					// if it's not null, there is an unvisited neighbour in that direction
+					if(d != null)
+					{
+						searchTile.addConnection(d);
+						searchSpace.push(searchTile);
+						HexTile neighbour = searchTile.getNeighbour(d);
+						neighbour.visit();
+						searchSpace.push(neighbour);
+					}
+				}
 			}
 		}
 		
-		for(HexTile.Direction d:HexTile.Direction.values())
-		{
-			this.settlementTile.addConnection(d);
-		}
 	}
 	
 	/**
