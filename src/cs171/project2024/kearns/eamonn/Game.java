@@ -67,7 +67,7 @@ public class Game
 	/**
 	 * This is just a helper for setting up the initial conditions
 	 */
-	private final double BASIC_EXTRACTION_RATE = 0.05;
+	private final double BASIC_EXTRACTION_RATE = 0.00125;
 	
 	/**
 	 * The settlment tile gets handled discretely
@@ -168,7 +168,7 @@ public class Game
 	 */
 	public Game()
 	{
-		this(11);
+		this(12);
 	}
 
 	/**
