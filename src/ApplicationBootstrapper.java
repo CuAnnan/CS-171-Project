@@ -153,12 +153,6 @@ public class ApplicationBootstrapper extends Application
 		for(Research research: game.getResearches())
 		{
 			VBox researchHBox = new VBox();
-			researchHBox.setOnMouseClicked(e->{
-				if(game.buyResearch(research) && !research.isRepeatable())
-				{
-					this.researchesVBox.getChildren().remove(researchHBox);
-				}
-			});
 			researchHBox.setOnMouseEntered(e->{
 				scene.setCursor(Cursor.HAND);
 			});
@@ -184,8 +178,20 @@ public class ApplicationBootstrapper extends Application
 				costBox.getChildren().add(resourceBox);
 			}
 			researchHBox.getChildren().add(costBox);
-
+			
 			this.researchesVBox.getChildren().add(researchHBox);
+			researchHBox.setOnMouseClicked(e->{
+				if(game.buyResearch(research) && research.isComplete())
+				{
+					this.researchesVBox.getChildren().remove(researchHBox);
+				}
+				if(research.isRepeatable())
+				{
+					rTitleText.setText(research.getName());
+					
+				}
+			});
+			
 		}
 
 		return researchesContainer;

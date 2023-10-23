@@ -23,5 +23,20 @@
             "Wood":100,
             "Water":100
         }
+    },
+    {
+        "name":"Better tools",
+        "repeatable":true,
+        "costs":{
+            "Wood":1,
+            "Water":1,
+            "Livestock":1
+        },
+        "boosts":{
+            "Wood":1.10,
+            "Water":1.10,
+            "Livestock":1.10
+        },
+        "maxLevel":10
     }
 ]

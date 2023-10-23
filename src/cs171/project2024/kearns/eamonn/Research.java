@@ -24,7 +24,23 @@ public class Research
      * A boolean to determine if the research has been completed
      */
     protected boolean complete;
+    /**
+     * A boolean to determine if the research is repeatable
+     */
     protected boolean repeatable;
+    /**
+     * An EnumMap mapping what this Research boosts and how much it boosts it by. This allows a single research to boost multiple resources.
+     */
+    protected EnumMap<Resource, Double> boosts = null;
+    /*
+     * An int to represent how many times this research can be done
+     */
+    protected int maxLevel = 0;
+    /**
+     * An int to represent how many times this research has been done
+     */
+    protected int currentLevel = 0;
+
 
     /**
      * A helper constructor for new researches that are not complete.
@@ -42,12 +58,16 @@ public class Research
      * @param costs     The costs associated with it as an EnumMap of Resources to Doubles
      * @param complete  Whether or not the research has already been complete
      */
-    public Research(String name, EnumMap<Resource, Double> costs, boolean complete, boolean repeatable)
+    public Research(String name, EnumMap<Resource, Double> costs, boolean repeatable, boolean complete)
     {
         this.name = name;
         this.costs = costs;
         this.complete = complete;
         this.repeatable = repeatable;
+        if(repeatable)
+        {
+            this.boosts = new EnumMap<>(Resource.class);
+        }
     }
 
     /**
@@ -56,7 +76,7 @@ public class Research
      */
     public String getName()
     {
-        return this.name;
+        return this.name+(repeatable?String.format(" (%d/%d)", this.currentLevel,this.maxLevel):"");
     }
 
     /**
@@ -82,11 +102,21 @@ public class Research
         return this.costs;
     }
 
+    public EnumMap<Resource, Double> getBoosts()
+    {
+        return this.boosts;
+    }
+
+    public double getBoostAmount(Resource resource)
+    {
+        return this.boosts.get(resource);
+    }
+
     /**
      * Getter for whether the research has been concluded.
      * @return
      */
-    public boolean isResearched()
+    public boolean isComplete()
     {
         return this.complete;
     }
@@ -96,6 +126,24 @@ public class Research
      */
     public void purchase()
     {
+        if(this.repeatable)
+        {
+            this.currentLevel++;
+            this.complete = this.currentLevel == this.maxLevel;
+            double max = Double.MIN_VALUE;
+            for(double boost:this.boosts.values())
+            {
+                if(max < boost)
+                {
+                    max = boost;
+                }
+            }
+            for(Resource resource: this.costs.keySet())
+            {
+                this.costs.put(resource, this.costs.get(resource)*max);
+            }
+            return;
+        }
         this.complete = true;
     }
 
@@ -111,19 +159,40 @@ public class Research
      */
     public static Research fromJsonNode(JsonNode json)
     {
-        
+        System.out.println(json);
         EnumMap<Resource, Double> costs = new EnumMap<>(Resource.class);
         JsonNode costsNode = json.get("costs");
         Iterator<String> iterator = costsNode.fieldNames();
         boolean complete = json.has("complete")?json.get("complete").asBoolean():false;
         boolean repeatable = json.has("repeatable")?json.get("repeatable").asBoolean():false;
+        
         iterator.forEachRemaining(e->{
             costs.put(
                 Resource.byLabel(e),
-                Double.parseDouble(costsNode.get(e).asText())
+                costsNode.get(e).asDouble()
             );
         });
-        Research r = new Research(json.get("name").asText(), costs, complete, repeatable);
+        System.out.println(repeatable);
+        Research r = new Research(json.get("name").asText(), costs, repeatable, complete);
+        
+        if(repeatable)
+        {
+            EnumMap<Resource, Double> boosts = new EnumMap<>(Resource.class);
+            JsonNode boostsNode = json.get("boosts");
+            Iterator<String> boostsItr = boostsNode.fieldNames();
+            boostsItr.forEachRemaining(e->{
+                boosts.put(
+                    Resource.byLabel(e),
+                    costsNode.get(e).asDouble()
+                );
+            });
+            r.boosts = boosts;
+            if(json.has("maxLevel"))
+            {
+                r.maxLevel = json.get("maxLevel").asInt();
+            }
+            r.currentLevel = json.has("currentLevel")?json.get("currentLevel").asInt():0;
+        }
         return r;
     }
 
@@ -136,6 +205,10 @@ public class Research
         for(Resource r : this.costs.keySet())
         {
             out+= String.format("\t%s: %.2f\n", r.label, this.costs.get(r));
+        }
+        if(this.repeatable)
+        {
+            out+=String.format("Level: %d/%d", this.currentLevel, this.maxLevel);
         }
         out += "]";
         return out;
