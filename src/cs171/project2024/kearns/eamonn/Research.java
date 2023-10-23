@@ -159,7 +159,6 @@ public class Research
      */
     public static Research fromJsonNode(JsonNode json)
     {
-        System.out.println(json);
         EnumMap<Resource, Double> costs = new EnumMap<>(Resource.class);
         JsonNode costsNode = json.get("costs");
         Iterator<String> iterator = costsNode.fieldNames();
@@ -172,7 +171,6 @@ public class Research
                 costsNode.get(e).asDouble()
             );
         });
-        System.out.println(repeatable);
         Research r = new Research(json.get("name").asText(), costs, repeatable, complete);
         
         if(repeatable)
