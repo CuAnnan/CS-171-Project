@@ -217,11 +217,10 @@ public class Game
 			{
 				this.resourcesRemaining.put(resource, this.resourcesRemaining.get(resource) - research.getCosts().get(resource));
 			}
-			System.out.println(research);
 			research.purchase();
 			if(research.isRepeatable())
 			{
-				
+
 			}
 			else
 			{

@@ -188,7 +188,7 @@ public class ApplicationBootstrapper extends Application
 				if(research.isRepeatable())
 				{
 					rTitleText.setText(research.getName());
-					
+
 				}
 			});
 			
@@ -413,7 +413,6 @@ public class ApplicationBootstrapper extends Application
 					double centreX = (externalPoints[0][i] + externalPoints[0][(i+1)%6] + externalPoints[0][(i+2)%6] - radius/1.8) / 3;
 					double centreY = (externalPoints[1][i] + externalPoints[1][(i+1)%6] + externalPoints[1][(i+2)%6] - radius/1.8) / 3;
 					
-					// System.out.println(String.format("Should be drawing the resource %s at (%.2f, %.2f) with a radius of %.2f, a start angle of 0.00, an ar", r.label, centreX, centreX, radius));
 					graphicsContext.fillArc(centreX, centreY, radius/2.5, radius/2.5, 0.0, -360 * tile.getAvailableResource(r), ArcType.ROUND);
 					graphicsContext.strokeArc(centreX, centreY, radius/2.5, radius/2.5, 0.0, -360 * tile.getAvailableResource(r), ArcType.ROUND);
 				}
